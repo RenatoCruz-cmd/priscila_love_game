@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#ebaa9e" />
+  <meta name="description" content="Um mundinho de lembranças feito com amor por Renato para Priscila." />
+  <title>Priscila — o mundinho do nosso amor 💗</title>
+  <style>
+    :root { --pink:#e588a4; --deep:#704653; --cream:#fff8ec; --gold:#f7cc72; --leaf:#789e79; --shadow:0 18px 50px #533c4e39; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; width:100%; height:100%; overflow:hidden; font-family: ui-rounded, 'Trebuchet MS', system-ui, sans-serif; color:#503a41; background:#ead9ce; touch-action:none; }
+    button { cursor:pointer; font:inherit; border:0; touch-action:manipulation; }
+    button:focus-visible { outline:3px solid #d45e88; outline-offset:3px; }
+    #game { display:block; width:100vw; height:100dvh; touch-action:none; }
+    .grain { position:fixed; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 70%, transparent 54%,#382f4220 100%); z-index:2; }
+    .hud { position:fixed; inset:0 0 auto; z-index:5; padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left)); display:flex; flex-wrap:wrap; gap:9px; justify-content:space-between; align-items:start; pointer-events:none; }
+    .hud-left,.hud-right { display:flex; gap:8px; align-items:center; pointer-events:auto; flex-wrap:wrap; }
+    .pill { background:#fff9f0e8; backdrop-filter:blur(14px); border:1.5px solid #ffffffc9; box-shadow:0 6px 20px #6e52602c; border-radius:999px; color:#64434d; font-weight:900; padding:10px 14px; font-size:14px; }
+    .pill small{font-weight:700;color:#af7182}.pill-btn{transition:transform .16s,background .16s}.pill-btn:hover{transform:translateY(-2px);background:white}
+    #guide { position:fixed; top:78px; left:50%; transform:translateX(-50%); z-index:5; pointer-events:none; max-width:min(92vw,530px); text-align:center; padding:9px 17px; border-radius:30px; background:#604f50c9; color:#fff8ec; font-size:13px; font-weight:800; box-shadow:0 5px 18px #3e2c3450; backdrop-filter:blur(6px); }
+    #interactHint { position:fixed; bottom:103px; left:50%; transform:translateX(-50%); z-index:5; text-align:center; pointer-events:none; background:#fff8f1f5; border:2px solid #e6a7b2; padding:10px 16px; border-radius:30px; font-size:14px; font-weight:900; box-shadow:0 6px 20px #412e4130; display:none; white-space:nowrap; }
+    .mobile { display:none; position:fixed; bottom:max(18px,env(safe-area-inset-bottom)); z-index:6; user-select:none; -webkit-user-select:none; }
+    #joy { left:max(24px,env(safe-area-inset-left)); width:118px;height:118px;border-radius:50%; border:3px solid #fff9f9c4; background:#fff7f3a3;box-shadow:0 5px 24px #483d4d42;backdrop-filter:blur(5px); touch-action:none; }
+    #joyKnob { width:52px;height:52px;background:linear-gradient(140deg,#fbd4de,#d982a0);border:3px solid white;box-shadow:0 5px 13px #8f59713a;border-radius:50%;position:absolute;left:30px;top:30px;pointer-events:none; }
+    #touchInteract { right:max(20px,env(safe-area-inset-right)); background:#e383a0;color:white;border-radius:50%;height:99px;width:99px;font-size:13px;font-weight:900;box-shadow:0 8px 20px #74475c59;border:3px solid #fff3f5; }
+    .overlay { position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px;background:#302e3d9e;backdrop-filter:blur(9px);overflow:auto;touch-action:pan-y; }
+    .hidden {display:none!important}
+    .welcome { background:linear-gradient(165deg,#fef6e8,#f7c9d0 63%,#e6a0b1);color:#704858;text-align:center;box-shadow:var(--shadow);border:3px solid #fff7; border-radius:32px;width:min(94vw,570px);padding:38px 30px 32px;position:relative;overflow:hidden; }
+    .welcome::before {content:'✿  ✨  ♡  ✿  ♡  ✨';position:absolute;top:15px;left:0;width:100%;letter-spacing:24px;color:#f9f5ea99;font-size:21px;pointer-events:none}
+    .welcome .big {font-size:76px;filter:drop-shadow(0 6px 9px #ac6d7840);animation:bob 3s ease-in-out infinite}
+    @keyframes bob {50%{transform:translateY(-8px)}}
+    h1 { font-size:clamp(30px,6vw,46px);line-height:1.13;margin:12px 0;font-family:Georgia,serif;color:#764b60; }
+    .welcome p{line-height:1.75;font-size:16px;max-width:430px;margin:16px auto 24px}.welcome .mini{font-size:12px;margin-top:18px;color:#845f6e}
+    .mainbtn { background:linear-gradient(135deg,#e9789d,#cc6387); border:2px solid #fff8;color:#fff;border-radius:999px;padding:13px 25px;font-weight:900;font-size:16px;box-shadow:0 8px 18px #a4506b53;transition:transform .15s; }
+    .mainbtn:hover,.mainbtn:active {transform:translateY(-2px) scale(1.02)}
+    .secondary { background:#fff5e9;color:#805768;border:2px solid #e8c6c7;border-radius:16px;padding:11px 15px;font-size:14px;font-weight:850; }
+    .dialogue { position:fixed;z-index:15;left:50%;bottom:clamp(115px,16vh,155px);width:min(92vw,610px);transform:translateX(-50%);background:#fff8f0f7;border:3px solid #e5aab8;box-shadow:var(--shadow);padding:16px 21px 18px;border-radius:24px;touch-action:manipulation; }
+    .dialogue::before {content:'💗';position:absolute;top:-20px;right:26px;font-size:29px;animation:bob 2.5s infinite}.dialogue .who{color:#c16b89;font-weight:900;font-size:13px;letter-spacing:.7px;text-transform:uppercase}.dialogue p{font-size:16px;line-height:1.6;margin:7px 0 11px;min-height:42px}.dialogue .controls{display:flex;justify-content:flex-end}
+    .dialogue button{color:#bf6d89;background:none;font-size:14px;font-weight:900;padding:6px 1px}
+    .modal { background:linear-gradient(160deg,#fffbf4,#fff1e8);border:3px solid #ffe6e5; border-radius:27px;box-shadow:var(--shadow);width:min(94vw,650px);max-height:min(91dvh,820px);display:flex;flex-direction:column;overflow:hidden;position:relative; }
+    .modal-head {background:linear-gradient(120deg,#f9c4d0,#f5dcba);padding:19px 23px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+    .modal-head h2{font-family:Georgia,serif;font-size:clamp(21px,4vw,29px);margin:0;color:#75485c}
+    .close {border-radius:50%;background:#fffbf2b6;width:37px;height:37px;font-size:22px;color:#905873;flex-shrink:0}
+    .modal-body {overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:22px 24px 28px;line-height:1.55;min-height:145px;}
+    .modal-sub { color:#986f78;font-size:14px;margin:-8px 0 18px; }
+    .renato-cheer {border:1px dashed #dca4b2;background:#fff2f1;border-radius:18px;padding:10px 14px;font-size:13px;color:#9f6478;margin-top:18px;text-align:center}
+    .choices {display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
+    .choice {border-radius:16px; padding:13px 8px;background:#fff;border:2px solid #efd4c9;color:#6f4956;font-weight:800;font-size:14px; min-height:60px;transition:transform .12s,background .12s;}
+    .choice:hover {background:#fff0f4;transform:translateY(-2px)}
+    .emoji-big {font-size:58px;text-align:center;margin:13px 0}
+    .progress { height:10px; background:#f2dfdb;border-radius:20px;overflow:hidden;margin:14px 0}.progress>div{height:100%;background:linear-gradient(90deg,#ed9eaa,#e6c17b);transition:width .28s}
+    .feedback {background:#fff0ed;border-radius:14px;padding:9px 13px;color:#b46080;font-size:14px;font-weight:750;margin-top:12px;}
+    .tiles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:min(85vw,330px);aspect-ratio:1;margin:16px auto;border:7px solid #ddb8a4;background:#dec6b5;border-radius:16px;}
+    .tile{background:linear-gradient(145deg,#a9cfac 8%,#f9d5b2 43%,#e9a1ae 90%);border:2px solid #fff9;border-radius:8px;font-weight:900;color:#92576b;font-size:22px;box-shadow:inset 0 -5px #b9848b3a;display:flex;align-items:center;justify-content:center;position:relative;}
+    .tile.empty{background:#bd9d9f55;border:1px dashed #fff4;box-shadow:none}
+    .tile .tile-emoji {font-size:30px;display:block}.tile small{position:absolute;bottom:4px;right:7px;background:#fff9;padding:0 5px;border-radius:5px}
+    .memorygrid {display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:14px}
+    .memorycard{border:2px solid #edbac7;background:#d783a0;border-radius:11px;aspect-ratio:0.85;color:#fff;font-size:27px;font-weight:900;display:grid;place-items:center;transition:background .18s,transform .18s;}
+    .memorycard.revealed,.memorycard.matched {background:#fff9e9;color:#825769}.memorycard.matched{background:#e0f3de;border-color:#a3c4a0}
+    .paint-palette{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin:13px auto}
+    .paint-palette button{height:31px;width:31px;border-radius:50%;border:3px solid white;box-shadow:0 1px 5px #0003}.paint-palette button.sel{outline:3px solid #bd6684}
+    .painting {display:block;margin:10px auto 20px;max-width:100%;width:300px;background:#fffdf0;border:10px solid #ddb18f;border-radius:13px;box-shadow:0 5px 13px #ac7f8a33}
+    .painting [data-region]{cursor:pointer;stroke:#915f66;stroke-width:4;transition:fill .15s}
+    .crochet{display:block;margin:10px auto;width:min(80vw,350px);height:270px;background:#fff4ef;border:2px dashed #e4abc1;border-radius:21px;touch-action:manipulation;}
+    .crochet circle{cursor:pointer;stroke:#fff;stroke-width:3}
+    .slide {background:linear-gradient(130deg,#2c273b,#674051);border:8px solid #ad8799;border-radius:20px;min-height:165px;color:#fff6ed;padding:30px 18px;text-align:center;font-family:Georgia,serif;font-size:21px;line-height:1.6;display:grid;place-items:center;margin-bottom:18px}
+    .belt {display:flex;gap:12px;overflow-x:auto;padding:16px 3px;touch-action:pan-x;max-width:100%}.ingredient{flex:0 0 105px;background:white;border:2px solid #eed3c4;border-radius:18px;padding:12px 7px;display:grid;gap:7px;place-items:center;font-size:30px}.ingredient span{font-size:12px;color:#835567;font-weight:850}
+    .collection{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.collection>div{background:#fff;border:1px solid #eeded4;padding:14px;border-radius:15px;font-size:14px;}
+    .collection b{display:block;color:#bc7089;margin-bottom:4px}
+    .letter {white-space:pre-wrap; font-size:15px;line-height:1.95;font-family:Georgia,serif;color:#694d53;background:linear-gradient(#fffbf0,#ffefdf);border-radius:15px;padding:24px;border:1px solid #eed7c4;box-shadow:inset 0 0 16px #efd9c366;min-height:180px;}
+    .photo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:11px;margin:18px 0}.photo-card{border:5px solid #fff;box-shadow:0 5px 14px #6f4b6031;border-radius:13px;background:linear-gradient(155deg,#f9d8e3,#fae3bc);aspect-ratio:1/1.07;display:grid;place-items:center;overflow:hidden;color:#905d77;text-align:center;font-size:13px;padding:9px}.photo-card img{width:100%;height:100%;object-fit:cover;border-radius:5px}
+    #toast {position:fixed;z-index:30;top:145px;left:50%;transform:translateX(-50%) translateY(-20px);background:#fff8ec;color:#ad6682;border:2px solid #e8a9b9;border-radius:20px;padding:12px 20px;font-size:14px;font-weight:850;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.3s;white-space:normal;text-align:center;max-width:92vw}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .floatheart {position:fixed;pointer-events:none;z-index:31;font-size:23px;animation:rise 1.4s ease-out forwards}
+    @keyframes rise {to{transform:translate(var(--dx),-130px) rotate(24deg);opacity:0}}
+    @media (pointer:coarse),(max-width:700px){.mobile{display:block}.hud{gap:5px}.pill{padding:8px 10px;font-size:12px}.hud-right{gap:5px}.hud-right button{font-size:12px}.hud-left{gap:5px}#guide{top:105px;font-size:11px;max-width:90vw}#interactHint{bottom:140px;font-size:12px}.modal-body{padding:17px}.memorycard{font-size:21px}.welcome{padding:25px 18px}.welcome .big{font-size:55px}}
+    @media(max-height:560px){.welcome{padding:14px}.welcome .big{font-size:34px}.welcome p{margin:7px auto}.dialogue{bottom:16px}.hud{padding:6px}#guide{top:55px}}
+  </style>
+</head>
+<body>
+<canvas id="game" aria-label="Mapa do mundinho da Priscila"></canvas>
+<div class="grain"></div>
+<div class="hud">
+  <div class="hud-left"><div class="pill" id="stars">⭐ 0/7</div><div class="pill" id="hearts">💛 0/10</div><div class="pill" id="coins">🌸 0</div></div>
+  <div class="hud-right"><button class="pill pill-btn" id="where">🧭 Onde ir agora?</button><button class="pill pill-btn" id="album">💌 Álbum</button><button class="pill pill-btn" id="sound">🔇 Som</button><button class="pill pill-btn" id="restart" title="Apagar progresso e recomeçar">↻</button></div>
+</div>
+<div id="guide">Primeira missão: encontre o Renato na Casa do Trabalho 💗</div>
+<div id="interactHint"></div>
+<div class="mobile" id="joy" aria-label="Controle de movimento"><div id="joyKnob"></div></div>
+<button class="mobile" id="touchInteract">Interagir<br>💗</button>
+<div id="startOverlay" class="overlay"><section class="welcome"><div class="big">🌷🏡💗</div><h1>Priscila, o mundinho do nosso amor</h1><p>Do primeiro olhar no trabalho às nossas próximas aventuras… fiz um cantinho só nosso, para você passear, sorrir e descobrir tudo o que sinto por você.</p><button class="mainbtn" id="startBtn">Entrar no nosso mundinho ✨</button><p class="mini">⌨️ WASD ou setas para andar · E / Espaço para interagir<br>📱 Toque no mapa ou use o controle virtual · O progresso fica salvo</p></section></div>
+<div id="dialogue" class="dialogue hidden" role="dialog" aria-label="Mensagem"><div class="who" id="dialogWho">💗 Renato</div><p id="dialogText"></p><div class="controls"><button id="dialogNext">Continuar ➜</button></div></div>
+<div id="modalOverlay" class="overlay hidden"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><header class="modal-head"><h2 id="modalTitle"></h2><button class="close" id="modalClose" aria-label="Fechar">×</button></header><div class="modal-body" id="modalBody"></div></section></div>
+<div id="toast" aria-live="polite"></div>
+<script>
+'use strict';
+/* =======================================================================
+   CONFIGURAÇÕES EDITÁVEIS — MEXA NESTE BLOCO PARA PERSONALIZAR O PRESENTE
+   Fotos: crie a pasta fotos ao lado do index.html e use caminhos relativos.
+   Exemplo: fotos: ['./fotos/nossa-viagem.jpg','./fotos/nosso-encontro.jpg']
+   Deixe listas vazias se não quiser expor fotos pessoais no site público.
+   ======================================================================= */
+const CONFIG = {
+  nomes:{ela:'Priscila',ele:'Renato',apelidoEla:'Priguiça',apelidoEle:'Zé Jacaré'},
+  mundo:{largura:1880,altura:1350,velocidade:110,zoom:1},
+  cores:{grama:'#b9d5a2',gramaEscura:'#a4c58e',rosa:'#e98fa9',agua:'#91cbd0',pele:'#c99172',cabelo:'#29242c',jaqueta:'#795749',cachecol:'#f0bfd0',jeans:'#91b0d4',polo:'#fff9ec'},
+  fotos: [], // Acrescente './fotos/foto1.jpg', './fotos/foto2.jpg' etc.
+  fotoQuebraCabeca:'', // Ex.: './fotos/foto1.jpg' (deixe vazio para ilustração)
+  elogios:[
+    'Seu sorriso transforma qualquer dia comum em um dia especial.','Seu carinho deixa meu coração em casa.',
+    'Você tem o dom de tornar tudo mais leve.','Seu olhar é um dos meus lugares favoritos no mundo.',
+    'Amo a forma como você se importa com as pessoas.','Sua criatividade me encanta todos os dias.',
+    'Você pinta o mundo com mais cor.','Seus desenhos mostram a beleza do seu jeito de ver a vida.',
+    'A delicadeza do seu crochê mostra o cuidado das suas mãos.','Sua risada é a minha melodia favorita.',
+    'Com você, até ficar em silêncio é gostoso.','Você me inspira a ser uma pessoa melhor.',
+    'Admiro sua paciência e seu coração enorme.','Seu abraço é meu lugar seguro.',
+    'Você é divertida até quando não está tentando.','Seu jeito espontâneo me faz sorrir.',
+    'Sua companhia transforma qualquer passeio em lembrança.','Você consegue me acalmar só por estar perto.',
+    'Sua inteligência me surpreende.','Você é linda de um jeito que palavras nunca explicam completamente.',
+    'O mundo fica mais bonito quando você está feliz.','Admiro a dedicação que coloca no que ama.',
+    'Você me entende até nas minhas esquisitices.','Você merece todo amor gentil do mundo.',
+    'Você faz nossos dias simples parecerem aventuras.','Amo cada pequeno detalhe da sua personalidade.',
+    'Sua presença me dá coragem para sonhar mais alto.','Seu jeito de cuidar de nós é precioso.',
+    'Amo seus talentos, mas amo ainda mais quem você é.','Você é a melhor parceria para qualquer filme e qualquer comida.',
+    'Com você aprendi que amor também é amizade e risada.','Seu jeitinho de Priguiça é insubstituível.',
+    'Você sempre encontra beleza nas coisas pequenas.','Seu coração é maior do que qualquer mapa.',
+    'Nossa história é meu capítulo preferido.','Você é perfeita para mim, do jeitinho que é.'
+  ],
+  cartinhas:[
+    'Se o amor tivesse cheiro, seria de yakisoba no nosso primeiro encontro. 🍜',
+    'Eu me apaixonei por você assim que te vi no trabalho. E sigo me apaixonando.',
+    'Se eu pudesse repetir um dia, escolheria qualquer dia comum ao seu lado.',
+    'Monte Verde foi nossa primeira viagem; ainda quero conhecer o mundo com você.',
+    'A nossa risada vale mais que qualquer tesouro. 💗',
+    'Minha artista favorita desenha e faz crochê, mas também desenhou meu futuro.',
+    'Seu abraço sempre será minha casa favorita.',
+    'Você, eu, um filme e comida: meu plano perfeito.',
+    'Quando você é Priguiça, eu viro Zé Jacaré para te fazer sorrir. 🐊',
+    'Obrigado por cada pedacinho desses dois anos. Eu te amo infinitamente.'
+  ],
+  razoes:[
+    'Porque você ilumina meus dias com seu sorriso.','Porque seu carinho é uma paz que eu nunca quero perder.',
+    'Porque a sua risada melhora tudo.','Porque seu talento deixa o mundo cheio de cor.',
+    'Porque você é minha companheira em todas as aventuras.','Porque a nossa primeira viagem virou uma lembrança eterna.',
+    'Porque você transforma comida e filmes em momentos inesquecíveis.','Porque você me faz querer ser melhor.',
+    'Porque você me escolhe, dia após dia.','Porque você é você — e isso já é tudo. 💗'
+  ],
+  // QUIZ DO NOSSO AMOR — edite perguntas, alternativas e o índice (0,1,2,3) da correta.
+  quiz:[
+    {p:'Onde nos conhecemos?',o:['Na escola','No trabalho','Em um show','No cinema'],a:1},
+    {p:'Onde foi nosso primeiro encontro e o que comemos?',o:['Pizza em casa','Sushi no shopping','Yakisoba no Japan Trailer','Hambúrguer na praça'],a:2},
+    {p:'Qual foi nossa primeira viagem?',o:['Monte Verde (MG)','Rio de Janeiro','Gramado','Campos do Jordão'],a:0},
+    {p:'Onde passamos nosso primeiro Dia dos Namorados?',o:['Japan Trailer','Cachaçaria Água Doce','Na praia','No cinema'],a:1},
+    {p:'Qual é o apelido carinhoso da Priscila?',o:['Pipoca','Fadinha','Priguiça','Princesa do mar'],a:2},
+    {p:'Qual é o apelido do Renato?',o:['Zé Jacaré','Rei do Yakisoba','Bob','Zé Formiga'],a:0},
+    {p:'O que a Priscila ama fazer?',o:['Só dormir','Pintar, desenhar, crochê e ver filmes','Correr maratonas','Subir vulcões'],a:1},
+    {p:'Há quanto tempo estamos juntos?',o:['3 meses','1 ano','5 anos','2 anos'],a:3}
+  ],
+  filmes:[
+    {e:'🧽🍍🌊',p:'Que desenho é esse?',o:['Bob Esponja','Shrek','Frozen','Toy Story'],a:0},
+    {e:'🧊👸❄️',p:'Adivinhe o filme:',o:['Moana','Frozen','Encanto','Up'],a:1},
+    {e:'🎈🏠👴',p:'Adivinhe o filme:',o:['Up — Altas Aventuras','Divertida Mente','Cars','Ratatoille'],a:0},
+    {e:'🦁👑🌅',p:'Adivinhe o filme:',o:['Madagascar','O Rei Leão','Aladdin','Rio'],a:1},
+    {e:'🐀👨‍🍳🍲',p:'Adivinhe o filme:',o:['Wall-E','A Bela e a Fera','Ratatouille','Elementos'],a:2},
+    {e:'🐠🔎🌊',p:'Adivinhe o filme:',o:['Procurando Nemo','Luca','Moana','Shark Tale'],a:0},
+    {e:'🐊💗😴',p:'Qual é o melhor filme da nossa vida?',o:['Uma história qualquer','A história de Priguiça e Zé Jacaré','Um filme de terror','Nenhum'],a:1}
+  ],
+  cartaFinal:`Minha Priguiça, meu amor, minha Priscila,\n\nQuando penso em tudo que vivemos nesses dois anos, volto sempre ao mesmo lugar: o trabalho. Era ali, no meio de dias comuns, que eu te via. E foi no primeiro instante em que meus olhos encontraram você que alguma coisa dentro de mim soube: essa menina seria muito especial. Eu ainda não conhecia todas as suas risadas, seus jeitinhos, suas ideias, os seus sonhos… mas já estava apaixonado.\n\nDepois veio o nosso primeiro encontro, aquele yakisoba no Japan Trailer. Talvez o mundo todo estivesse seguindo normalmente, mas o meu estava começando uma história nova. Veio nossa primeira viagem a Monte Verde, com aquela sensação boa de descobrir lugares ao lado da pessoa certa. Veio também nosso primeiro Dia dos Namorados, na Cachaçaria Água Doce, e tantos momentos que não caberiam nem neste mapa inteiro.\n\nEu amo a sua fominha, o seu jeito de Priguiça, a sua paixão por filmes e pelo Bob Esponja. Amo ver você pintar, desenhar e fazer crochê. Amo o cuidado que coloca em tudo o que faz e a forma como transforma coisas simples em coisas lindas. Amo o seu sorriso, sua paciência, seu carinho e a paz que encontro na sua companhia. Você me faz rir, me faz feliz e, acima de tudo, me faz querer ser um homem melhor.\n\nEu sei que nem todos os dias são fáceis. Mas quero estar com você também nesses dias: quando a vida estiver corrida, quando faltar energia, quando uma coisa não der certo. Quero dividir refeições, filmes, planos bobos, conquistas enormes e tardes sem fazer nada. Quero continuar descobrindo o mundo com você — e, quando o mundo cansar, voltar para o nosso cantinho.\n\nSe eu pudesse escolher de novo o momento em que nossas histórias se cruzaram, escolheria o mesmo. Escolheria você, mil vezes. Não porque tudo é perfeito, mas porque você é perfeita para mim, inteira, verdadeira e maravilhosa do jeitinho que é.\n\nObrigado por esses dois anos, por ter entrado na minha vida e por fazer dela um lugar mais bonito. No nosso mundinho pode haver sete estrelas, dez corações e infinitas aventuras, mas a coisa mais valiosa sempre será você.\n\nCom todo o meu amor,\nRenato, seu Zé Jacaré 🐊💗`
+};
+/* FIM DAS CONFIGURAÇÕES EDITÁVEIS */
+// ======================= MOTOR, ESTADO E MAPA =======================
+const $=id=>document.getElementById(id), canvas=$('game'), ctx=canvas.getContext('2d',{alpha:false});
+const clamp=(x,min,max)=>Math.max(min,Math.min(max,x)), lerp=(a,b,t)=>a+(b-a)*t;
+const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const random=(a,b)=>a+Math.random()*(b-a);
+const HOUSE_DATA=[
+  {id:'trabalho',x:350,y:270,title:'Casa do Trabalho',short:'Trabalho',symbol:'💼',roof:'#aa778b',wall:'#f6d5ae'},
+  {id:'yakisoba',x:795,y:265,title:'Casa do Yakisoba',short:'Japan Trailer',symbol:'🍜',roof:'#d38970',wall:'#f5d5ab'},
+  {id:'restaurante',x:1315,y:275,title:'Cachaçaria Água Doce',short:'Restaurante',symbol:'🍽️',roof:'#c17c76',wall:'#f2daba'},
+  {id:'monte',x:1660,y:265,title:'Casa de Monte Verde',short:'Monte Verde',symbol:'⛰️',roof:'#7e9c8e',wall:'#f6dbc0'},
+  {id:'atelie',x:345,y:990,title:'Ateliê da Priscila',short:'Ateliê',symbol:'🎨',roof:'#b78bad',wall:'#fbe2ca'},
+  {id:'cinema',x:900,y:985,title:'Cinema do Amor',short:'Cinema',symbol:'🎬',roof:'#8778ad',wall:'#f3d9ce'},
+  {id:'abacaxi',x:1550,y:985,title:'Casa do Abacaxi',short:'Abacaxi',symbol:'🍍',roof:'#d3b66e',wall:'#f2daa1'}
+];
+const HEART_DATA=[
+  {x:195,y:449},{x:625,y:430},{x:1070,y:359},{x:1760,y:495},{x:176,y:844},
+  {x:610,y:862},{x:1112,y:1110},{x:1750,y:1150},{x:1380,y:846},{x:1045,y:1260}
+];
+const EXTRAS=[
+  {id:'estatua',x:980,y:480,name:'Estátua da gatinha 🎀',em:'🐱',range:95},
+  {id:'fonte',x:1180,y:510,name:'Fonte dos desejos ⛲',em:'⛲',range:75},
+  {id:'correio',x:1210,y:590,name:'Caixa de cartinhas 💌',em:'📮',range:65},
+  {id:'ze',x:355,y:585,name:'Zé Jacaré 🐊',em:'🐊',range:78},
+  {id:'bob',x:1515,y:788,name:'Amiguinho esponja 🧽',em:'🧽',range:75},
+  {id:'caracol',x:1230,y:807,name:'Caracol 🐌',em:'🐌',range:69},
+  {id:'pesca',x:800,y:581,name:'Ponto de pesca 🎣',em:'🎣',range:70},
+  {id:'piquenique',x:210,y:1125,name:'Piquenique 🍱',em:'🧺',range:78},
+  {id:'fogueira',x:1650,y:1175,name:'Fogueira ✨',em:'🔥',range:78},
+  {id:'balao',x:1440,y:505,name:'Balão dos sonhos 🎈',em:'🎈',range:80},
+  {id:'placa',x:662,y:545,name:'Placa carinhosa',em:'💗',range:58},
+  {id:'varal',x:500,y:1058,name:'Varal da artista 🎨',em:'🎨',range:74}
+];
+const bridges=[520,1040,1515];
+const waterY=x=>681+25*Math.sin(x/175);
+function inBridge(x){return bridges.some(b=>Math.abs(b-x)<58)}
+const defaultSave=()=>({stars:[],hearts:[],flower:0,album:[],achievements:[],compliments:0,met:false,finished:false,mail:0,zeTalks:0});
+function loadProgress(){try{let raw=JSON.parse(localStorage.getItem('mundinho-priscila-v1')||'null');return raw?{...defaultSave(),...raw}:defaultSave()}catch{return defaultSave()}}
+let progress=loadProgress();
+const save=()=>{try{localStorage.setItem('mundinho-priscila-v1',JSON.stringify(progress))}catch{}};
+const player={x:440,y:458,dir:2,moving:false,step:0,idle:0,jump:0,spin:0};
+const renato={x:410,y:328,dir:1,moving:false};
+const game={running:false,mode:'start',keys:{},touch:{x:0,y:0},target:null,frame:0,elapsed:0,cam:{x:450,y:470,zoom:1},screen:{w:innerWidth,h:innerHeight,dpr:1},trail:[],particles:[],bubble:null,weather:0,toastTimer:null,dialogCallback:null,dialogFull:'',dialogInterval:null,nearest:null,painted:false,knitted:false,paintingColors:{},selectedColor:'#ef91ac',fishes:0,music:false,audio:null,audioTimer:null,lastStep:0};
+let seed=2026;
+function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+const terrain={grass:[],flowers:[],trees:[],clouds:[],animals:[]};
+function isHouseArea(x,y,margin=0){return HOUSE_DATA.some(h=>Math.abs(x-h.x)<95+margin&&y>h.y-145-margin&&y<h.y+110+margin)}
+function inRiver(x,y,margin=0){return Math.abs(y-waterY(x))<55+margin&&!inBridge(x)}
+for(let i=0;i<550;i++){let x=20+rnd()*1840,y=20+rnd()*1310;terrain.grass.push({x,y,k:rnd(),w:rnd()*6});}
+for(let i=0;i<170;i++){let x=30+rnd()*1820,y=40+rnd()*1270;if(!inRiver(x,y,15)&&!isHouseArea(x,y,35))terrain.flowers.push({x,y,c:['#f8fbdf','#e899a3','#f7cb85','#d7b5df'][Math.floor(rnd()*4)],s:3+rnd()*3});}
+for(let i=0;i<85;i++){
+  let x=40+rnd()*1800,y=30+rnd()*1280;
+  if(inRiver(x,y,40)||isHouseArea(x,y,55)||distance({x,y},{x:980,y:500})<200||bridges.some(b=>Math.abs(x-b)<95&&Math.abs(y-waterY(x))<140)||Math.abs(y-540)<40||Math.abs(y-840)<40)continue;
+  terrain.trees.push({x,y,r:22+rnd()*14,type:rnd()>.8?1:0,phase:rnd()*6.28});
+}
+for(let i=0;i<12;i++)terrain.clouds.push({x:rnd()*2000,y:45+rnd()*450,k:.5+rnd(),speed:4+rnd()*9});
+for(let i=0;i<18;i++)terrain.animals.push({x:35+rnd()*1790,y:130+rnd()*1080,type:['🐇','🦋','🐿️','🐦','🐈','🐕','🐥'][Math.floor(rnd()*7)],phase:rnd()*6.28,speed:8+rnd()*9});
+function resize(){let d=Math.min(devicePixelRatio||1,2);game.screen={w:innerWidth,h:innerHeight,dpr:d};canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0)}
+window.addEventListener('resize',resize);resize();
+function updateHud(){
+  $('stars').textContent=`⭐ ${progress.stars.length}/7`;
+  $('hearts').textContent=`💛 ${progress.hearts.length}/10`;
+  $('coins').textContent=`🌸 ${progress.flower}`;
+  const next=nextTarget();$('guide').textContent=progress.finished?'O nosso mundinho é seu para explorar sempre! 💗':`🧭 ${next.label}`;
+  $('sound').textContent=game.music?'🔊 Som':'🔇 Som';
+}
+function nextTarget(){
+ if(!progress.met)return {x:renato.x,y:renato.y,label:'Primeira missão: encontre Renato na Casa do Trabalho 💗'};
+ let next=HOUSE_DATA.find(h=>!progress.stars.includes(h.id));
+ if(next)return {x:next.x,y:next.y+56,label:`Próxima estrela: ${next.title} ${next.symbol}`};
+ return {x:980,y:480,label:progress.finished?'Volte para a praça quando quiser 💗':'As 7 estrelas! Volte à estátua na praça 💗'};
+}
+function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(game.toastTimer);game.toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3100)}
+function heartBurst(x=innerWidth/2,y=innerHeight/2,n=12){for(let i=0;i<n;i++){let s=document.createElement('div');s.className='floatheart';s.textContent=['💗','💖','✨','💕','🌸'][i%5];s.style.left=`${x+random(-45,45)}px`;s.style.top=`${y+random(-20,20)}px`;s.style.setProperty('--dx',`${random(-100,100)}px`);document.body.appendChild(s);setTimeout(()=>s.remove(),1450)}}
+function earnAchievement(s){if(progress.achievements.includes(s))return;progress.achievements.push(s);save();toast(`🏆 Conquista: ${s}`)}
+function addAlbum(s){if(!progress.album.includes(s)){progress.album.push(s);save()}}
+function nextCompliment(){if(progress.compliments>=CONFIG.elogios.length)return 'Meu amor por você continua crescendo a cada dia.';const phrase=CONFIG.elogios[progress.compliments++];addAlbum('🌷 '+phrase);save();return phrase}
+function dialog(who,text,onDone){
+ game.mode='dialog';game.dialogCallback=onDone||null;game.dialogFull=text;clearInterval(game.dialogInterval);
+ $('dialogWho').textContent=who;$('dialogue').classList.remove('hidden');const t=$('dialogText');t.textContent='';
+ let i=0;game.dialogInterval=setInterval(()=>{i=Math.min(i+2,text.length);t.textContent=text.slice(0,i);if(i===text.length)clearInterval(game.dialogInterval)},19);
+}
+function nextDialog(){const el=$('dialogText');if(el.textContent.length<game.dialogFull.length){clearInterval(game.dialogInterval);el.textContent=game.dialogFull;return}clearInterval(game.dialogInterval);$('dialogue').classList.add('hidden');game.mode='world';let fn=game.dialogCallback;game.dialogCallback=null;if(fn)fn();}
+$('dialogNext').addEventListener('click',nextDialog);
+function showModal(title,content,subtitle=''){
+ game.mode='mini';$('modalTitle').textContent=title;$('modalBody').innerHTML=(subtitle?`<p class="modal-sub">${subtitle}</p>`:'')+content+(progress.met?'<div class="renato-cheer">🤍 Renato: “Você consegue, Priguiça! Estou torcendo por você.”</div>':'');$('modalOverlay').classList.remove('hidden');
+}
+function hideModal(){if(game.mode==='start')return;game.mode='world';$('modalOverlay').classList.add('hidden');$('modalBody').innerHTML='';}
+$('modalClose').addEventListener('click',hideModal);
+$('modalOverlay').addEventListener('click',e=>{if(e.target===$('modalOverlay'))hideModal()});
+function spawnParticles(x,y,n=9,chars=['🌸','✨']){for(let i=0;i<n;i++)game.particles.push({x,y,vx:random(-40,40),vy:random(-65,-10),life:random(.5,1.7),total:1.7,c:chars[Math.floor(random(0,chars.length))]});if(game.particles.length>110)game.particles.splice(0,20)}
+function collide(x,y){
+ if(x<23||y<25||x>CONFIG.mundo.largura-23||y>CONFIG.mundo.altura-22)return true;
+ if(inRiver(x,y,2))return true;
+ for(const h of HOUSE_DATA)if(x>h.x-82&&x<h.x+82&&y>h.y-113&&y<h.y+32)return true;
+ for(const t of terrain.trees)if(Math.hypot(x-t.x,y-t.y)<19)return true;
+ return false;
+}
+// ======================= CONTROLES DE TECLADO E TOQUE =======================
+function moveToTouch(e){let r=canvas.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;const z=game.cam.zoom;game.target={x:game.cam.x+(px-game.screen.w/2)/z,y:game.cam.y+(py-game.screen.h/2)/z};}
+canvas.addEventListener('pointerdown',e=>{if(game.mode==='world')moveToTouch(e)});
+document.addEventListener('keydown',e=>{
+ const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' ','w','a','s','d'].includes(k))e.preventDefault();
+ if(k==='escape'){if(game.mode==='mini')hideModal();else if(game.mode==='dialog')nextDialog();return}
+ if(game.mode==='dialog'&&(k==='e'||k===' '||k==='enter')){nextDialog();return}
+ if(game.mode==='world'&&(k==='e'||k===' ')){interact();return}
+ game.keys[k]=true;
+});
+document.addEventListener('keyup',e=>game.keys[e.key.toLowerCase()]=false);
+window.addEventListener('blur',()=>{game.keys={};game.touch={x:0,y:0};resetStick()});
+const stick=$('joy'),knob=$('joyKnob');let joyPointer=null;
+function resetStick(){knob.style.transform='translate(0,0)'}
+function updateStick(e){let r=stick.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),mag=Math.hypot(dx,dy),limit=36;if(mag>limit){dx=dx/mag*limit;dy=dy/mag*limit}game.touch={x:dx/limit,y:dy/limit};knob.style.transform=`translate(${dx}px,${dy}px)`;game.target=null;}
+stick.addEventListener('pointerdown',e=>{joyPointer=e.pointerId;stick.setPointerCapture(joyPointer);updateStick(e)});
+stick.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)updateStick(e)});
+function stopStick(e){if(joyPointer===null||e.pointerId===joyPointer){joyPointer=null;game.touch={x:0,y:0};resetStick()}}
+stick.addEventListener('pointerup',stopStick);stick.addEventListener('pointercancel',stopStick);
+$('touchInteract').addEventListener('click',interact);
+$('startBtn').addEventListener('click',()=>{game.running=true;game.mode='world';$('startOverlay').classList.add('hidden');initAudio();updateHud();dialog('💌 Renato','Bem-vinda ao nosso mundinho, Priguiça! Para começar, vá à Casa do Trabalho. Tem alguém muito apaixonado esperando por você... 🐊💗')});
+$('where').addEventListener('click',()=>{const n=nextTarget();spawnParticles(n.x,n.y,15,['✨','💗']);dialog('🧭 Zé Jacaré',n.label+' Siga a seta e o brilho dourado pelo mapa!')});
+$('album').addEventListener('click',showAlbum);
+$('restart').addEventListener('click',()=>{if(confirm('Quer apagar as estrelas, os corações e recomeçar nossa história? 💗')){progress=defaultSave();player.x=440;player.y=458;renato.x=410;renato.y=328;game.trail=[];game.target=null;save();updateHud();hideModal();toast('Nosso amor merece viver o começo de novo! 💗')}});
+function update(dt){
+ game.elapsed+=dt;game.frame++;
+ if(game.mode==='world'){
+  let vx=Number(game.keys['d']||game.keys['arrowright'])-Number(game.keys['a']||game.keys['arrowleft'])+game.touch.x;
+  let vy=Number(game.keys['s']||game.keys['arrowdown'])-Number(game.keys['w']||game.keys['arrowup'])+game.touch.y;
+  if(Math.hypot(vx,vy)<.09&&game.target){let dx=game.target.x-player.x,dy=game.target.y-player.y,dist=Math.hypot(dx,dy);if(dist>12){vx=dx/dist;vy=dy/dist}else game.target=null}
+  const m=Math.hypot(vx,vy);player.moving=m>.09;
+  if(player.moving){vx/=m;vy/=m;player.dir=Math.abs(vx)>Math.abs(vy)?(vx>0?1:3):(vy>0?2:0);const step=CONFIG.mundo.velocidade*dt;
+   let nx=player.x+vx*step,ny=player.y+vy*step;
+   if(!collide(nx,player.y))player.x=nx;else if(game.target)game.target=null;
+   if(!collide(player.x,ny))player.y=ny;else if(game.target)game.target=null;
+   player.step+=dt*11;player.idle=0;
+   if(game.elapsed-game.lastStep>.1){game.lastStep=game.elapsed;if(Math.random()<.32)spawnParticles(player.x,player.y+12,1,['🍃','🌸']);}
+  }else{player.idle+=dt;player.step*=.94}
+  if(player.jump>0)player.jump=Math.max(0,player.jump-dt);
+  if(player.spin>0)player.spin=Math.max(0,player.spin-dt);
+  if(progress.met){
+   game.trail.push({x:player.x,y:player.y,t:game.elapsed});
+   while(game.trail.length&&game.elapsed-game.trail[0].t>1.7)game.trail.shift();
+   const earlier=game.trail.find(p=>game.elapsed-p.t<=.52)||game.trail[0];
+   if(earlier){let d=distance(renato,earlier);if(d>300){renato.x=player.x-40;renato.y=player.y+20;spawnParticles(renato.x,renato.y,12,['💗']);}
+    else{const speed=Math.min(1,dt*12);renato.x=lerp(renato.x,earlier.x,speed);renato.y=lerp(renato.y,earlier.y,speed);renato.moving=d>5;}}
+  }
+  if(!progress.met&&distance(player,renato)<78)meetRenato();
+  for(let i=0;i<HEART_DATA.length;i++)if(!progress.hearts.includes(i)&&distance(player,HEART_DATA[i])<28)collectHeart(i);
+  for(const flower of terrain.flowers){if(!flower.picked&&distance(player,flower)<12){flower.picked=true;progress.flower++;player.jump=.36;spawnParticles(flower.x,flower.y,5,['🌼','✨']);if(progress.flower%3===0&&progress.compliments<CONFIG.elogios.length){const phrase=nextCompliment();toast('🌷 '+phrase)}if(progress.flower===12)earnAchievement('Jardineira apaixonada 🌷');save();updateHud();}}
+  const near=findNearest();game.nearest=near;
+  $('interactHint').style.display=near?'block':'none';if(near)$('interactHint').textContent=`${near.name} · E / Interagir 💗`;
+ }
+ let targetZoom=game.mode==='dialog'&&game.dialogFull.includes('Foi aqui que tudo começou')?1.08:CONFIG.mundo.zoom;
+ game.cam.zoom=lerp(game.cam.zoom,targetZoom,Math.min(1,dt*2.5));
+ game.cam.x=lerp(game.cam.x,player.x,Math.min(1,dt*3));game.cam.y=lerp(game.cam.y,player.y,Math.min(1,dt*3));
+ for(const p of game.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=dt*38;p.life-=dt}
+ game.particles=game.particles.filter(p=>p.life>0);
+ if(!progress.finished&&progress.stars.length===7&&game.mode==='world'&&!game.notifiedFinal){game.notifiedFinal=true;toast('✨ As sete estrelas! A gatinha da praça acordou! 💗');}
+}
+function findNearest(){
+ let options=[];
+ for(const h of HOUSE_DATA){let d=distance(player,{x:h.x,y:h.y+56});if(d<92)options.push({name:h.title,d,x:h.x,y:h.y+56,act:()=>openHouse(h.id)})}
+ for(const x of EXTRAS){let d=distance(player,x);if(d<x.range)options.push({...x,d,act:()=>interactExtra(x.id)})}
+ if(!progress.met){let d=distance(player,renato);if(d<95)options.push({name:'Renato 💗',d,act:meetRenato})}
+ options.sort((a,b)=>a.d-b.d);return options[0]||null;
+}
+function interact(){if(game.mode==='dialog'){nextDialog();return}if(game.mode!=='world')return;const n=findNearest();if(n){game.target=null;n.act();playSound(600,.14)}else toast('Chegue um pouquinho mais perto de algo brilhante 💗')}
+function meetRenato(){if(progress.met)return;progress.met=true;game.target=null;progress.achievements.push('O dia em que tudo começou 💞');addAlbum('Foi no trabalho que meus olhos encontraram os seus e eu me apaixonei à primeira vista.');save();updateHud();heartBurst(innerWidth/2,innerHeight/2,18);spawnParticles(renato.x,renato.y,30,['💗','✨']);playSound(740,.4);
+ dialog('💗 Renato','Foi aqui que tudo começou. Eu me apaixonei por você no primeiro momento em que te vi. 💗 Desde então, Priguiça, meu lugar preferido é ao seu lado. Agora vamos passear juntinhos, para sempre!');}
+function collectHeart(i){progress.hearts.push(i);let text=CONFIG.razoes[i];addAlbum(`💛 Razão ${i+1}: ${text}`);player.jump=.45;player.spin=.65;spawnParticles(HEART_DATA[i].x,HEART_DATA[i].y,15,['💛','✨']);playSound(830,.2);toast(`💛 ${text}`);if(progress.hearts.length===10)earnAchievement('Todos os corações 💛');save();updateHud()}
+function interactExtra(id){
+ switch(id){
+ case 'estatua':if(progress.stars.length===7)startFinal();else dialog('🎀 Gatinha da praça',`Olá, Priscila! A magia do amor vai despertar quando você juntar as sete estrelas. Você já tem ${progress.stars.length} de 7!`);break;
+ case 'fonte':spawnParticles(1180,510,15,['🌈','✨']);dialog('⛲ Fonte dos desejos','Joguei uma moedinha e fiz um desejo: que a gente continue colecionando dias felizes e abraços demorados.');break;
+ case 'correio':{let msg=CONFIG.cartinhas[progress.mail%CONFIG.cartinhas.length];progress.mail++;addAlbum(`💌 ${msg}`);save();dialog('📮 Uma cartinha do Renato',msg);break}
+ case 'ze':progress.zeTalks++;save();dialog('🐊 Zé Jacaré',progress.zeTalks>=5?'Segredo do Zé Jacaré: a maior estrela do mapa é você, Priguiça! Eu te amo mais que yakisoba! 💚':progress.met?'Priguiça, você já encontrou seu Zé Jacaré! Agora junte as estrelas nas casinhas e vá para a praça.':'Oi, Priguiça! Corre lá na Casa do Trabalho. Seu Zé Jacaré está te esperando, todo apaixonadinho!');break;
+ case 'bob':dialog('🧽 Amiguinho amarelo','Oi, Priguiça! A Casa do Abacaxi tem hambúrguer e brincadeira com águas-vivas. A fome manda lembranças! 🍍');break;
+ case 'caracol':dialog('🐌 Caracol','Miaaau... Tradução: Renato acha você a pessoa mais linda deste mundinho. ✨');break;
+ case 'pesca':startFishing();break;
+ case 'piquenique':dialog('🧺 Piquenique a dois','Priguiça perguntou: “Tem comida?” Zé Jacaré respondeu: “Tem sim, mas você é o melhor pedaço do meu dia!” 🍱💗');break;
+ case 'fogueira':dialog('🔥 Fogueira sob as estrelas','Se cada estrela fosse um momento bom ao seu lado, faltaria céu para guardar todas as nossas lembranças.');break;
+ case 'balao':dialog('🎈 Balão dos sonhos','Ainda quero viajar muito com você, Priscila. Monte Verde foi só o início de todos os lugares que vamos descobrir!');break;
+ case 'placa':dialog('🪧 Placa da praça','Atenção! Zona de gente perfeita: Priscila. Sorrisos, carinho e abraços obrigatórios! 💕');break;
+ case 'varal':dialog('🎨 Varal dos talentos','Tanta arte nesse mundinho... e ainda assim o seu coração é a sua obra mais linda.');break;
+ }
+}
+// ======================= ARTE ORIGINAL EM CANVAS 2D =======================
+function rr(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}}
+function ellipse(x,y,rx,ry,fill){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill()}
+function line(x,y,x2,y2,color,width=2){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.lineWidth=width;ctx.strokeStyle=color;ctx.lineCap='round';ctx.stroke()}
+function textAt(t,x,y,size=17,color='#fff7ef',align='center',outline=true,font='ui-rounded, system-ui, sans-serif'){
+ ctx.textAlign=align;ctx.textBaseline='middle';ctx.font=`900 ${size}px ${font}`;if(outline){ctx.lineWidth=size>20?5:4;ctx.strokeStyle='#715763bc';ctx.strokeText(t,x,y)}ctx.fillStyle=color;ctx.fillText(t,x,y);
+}
+function emoji(t,x,y,size=25){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`${size}px 'Apple Color Emoji','Segoe UI Emoji',sans-serif`;ctx.fillText(t,x,y)}
+function pathCurve(points,color,width){ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(...points[i]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke()}
+function drawLand(t){
+ ctx.fillStyle=CONFIG.cores.grama;ctx.fillRect(0,0,1880,1350);
+ for(let j=0;j<17;j++)for(let i=0;i<24;i++){let x=i*80+20*Math.sin(j*6+i*2),y=j*80+20*Math.cos(i*4+j);ellipse(x,y,45,31,(i+j)%3===0?'#c3dca9':'#b4d19b')}
+ // Caminhos dourados de pedra; os caminhos tornam a exploração mais fácil.
+ pathCurve([[350,345],[370,525],[520,600],[520,760],[345,880],[345,1020]],'#ecd6ac',83);
+ pathCurve([[795,340],[790,505],[1040,590],[1040,770],[900,915]],'#ead0a4',84);
+ pathCurve([[1315,350],[1390,535],[1515,610],[1515,765],[1550,920]],'#edd7af',83);
+ pathCurve([[345,505],[670,505],[980,500],[1315,515],[1660,510]],'#f1dcb7',77);
+ pathCurve([[340,1000],[595,1075],[900,1070],[1250,1050],[1550,1030]],'#f1d9b1',67);
+ for(let i=0;i<80;i++){let x=(i*127)%1840+20,y=(i*209)%1280+30;ellipse(x,y,2.5,1.5,'#e7dcb7')}
+ // Praça da gatinha.
+ ellipse(980,510,190,145,'#e9cca8');ellipse(980,505,176,132,'#f1daba');
+ for(let k=0;k<19;k++){let a=k*2*Math.PI/19;ellipse(980+153*Math.cos(a),505+107*Math.sin(a),10,7,k%2?'#e6a0ab':'#fff3ce')}
+ for(const g of terrain.grass){let sway=2*Math.sin(t*1.7+g.k*12);line(g.x,g.y,g.x-2+sway,g.y-4-g.w*.5,g.k>.6?'#91b884':'#a4c48e',1.3)}
+ for(const f of terrain.flowers){if(f.picked)continue;ellipse(f.x,f.y,1.3,4,'#749d70');for(let a=0;a<5;a++){let th=a*6.28/5;ellipse(f.x+Math.cos(th)*f.s*.6,f.y+Math.sin(th)*f.s*.6,2.2,2.2,f.c)}ellipse(f.x,f.y,2.3,2.3,'#f8d480')}
+}
+function drawWater(t){
+ ctx.save();ctx.beginPath();for(let x=0;x<=1880;x+=10){if(x===0)ctx.moveTo(x,waterY(x)-56);else ctx.lineTo(x,waterY(x)-56)}for(let x=1880;x>=0;x-=10)ctx.lineTo(x,waterY(x)+56);ctx.closePath();ctx.fillStyle='#e8e3b8';ctx.fill();
+ ctx.beginPath();for(let x=0;x<=1880;x+=10){if(x===0)ctx.moveTo(x,waterY(x)-49);else ctx.lineTo(x,waterY(x)-49)}for(let x=1880;x>=0;x-=10)ctx.lineTo(x,waterY(x)+49);ctx.closePath();ctx.fillStyle=CONFIG.cores.agua;ctx.fill();ctx.clip();
+ for(let i=0;i<65;i++){let x=((i*71+t*(9+i%4))%2020)-90,y=waterY(x)+Math.sin(i*1.7)*37;line(x,y,x+15,y-1,'#ffffff78',2)}
+ for(let i=0;i<17;i++){let x=(i*151+20*Math.sin(t*.9+i))%1880,y=waterY(x)+Math.sin(t*2+i)*30;emoji(i%5===0?'🦆':i%3?'🐟':'🫧',x,y,i%5===0?24:16)}
+ ctx.restore();
+ for(const b of bridges){const y=waterY(b);rr(b-62,y-62,124,124,9,'#966e52');rr(b-53,y-62,106,124,5,'#c89d72');for(let j=0;j<8;j++){line(b-49,y-53+j*15,b+49,y-53+j*15,'#9f745a',3)}line(b-59,y-64,b-59,y+61,'#765446',7);line(b+59,y-64,b+59,y+61,'#765446',7);for(let j=0;j<4;j++){ellipse(b-59,y-48+j*33,5,5,'#edc28a');ellipse(b+59,y-48+j*33,5,5,'#edc28a')}}
+}
+function drawTree(tree,t){let {x,y,r,type,phase}=tree,sw=Math.sin(t*.9+phase)*2;
+ ellipse(x+4,y+11,r*.82,r*.39,'#507e654c');rr(x-6,y-17,12,36,5,'#8f6d54');
+ if(type){for(let k=0;k<3;k++){let w=r*(1.2-k*.22),yy=y-12-k*15;ctx.beginPath();ctx.moveTo(x+sw,yy-w*1.3);ctx.lineTo(x-w,yy+17);ctx.lineTo(x+w,yy+17);ctx.closePath();ctx.fillStyle=['#7b9d7d','#648f77','#76a087'][k];ctx.fill()}}
+ else {ellipse(x+sw,y-30,r*.85,r*.84,'#6d9a77');ellipse(x-12+sw,y-35,r*.72,r*.75,'#84ad82');ellipse(x+13+sw,y-42,r*.78,r*.72,'#8fb78a');ellipse(x+sw,y-49,r*.5,r*.39,'#a3c998')}
+ for(let k=0;k<3;k++){ellipse(x-r*.5+k*r*.42+sw,y-35-(k%2)*15,3,2,type?'#b7d8ac':'#e6d5b1')}
+}
+function drawHouse(h,t){const {x,y}=h,won=progress.stars.includes(h.id),night=(Math.sin(t/29)+1)/2>.73;
+ ctx.save();ctx.translate(x,y);
+ ellipse(0,18,94,32,'#4e705438');
+ // Chaminé e fumaça suave.
+ rr(43,-120,18,48,4,'#b98478','#fff8dc');
+ for(let i=0;i<3;i++){ellipse(52+Math.sin(t*.5+i)*6,-136-i*17-(t*9%17),11+i*3,6+i*2,'#ffffff76')}
+ rr(-76,-90,152,109,10,h.wall,'#e3b4a4');
+ // Telhado com beiral e telhas.
+ ctx.beginPath();ctx.moveTo(-94,-78);ctx.lineTo(0,-155);ctx.lineTo(94,-78);ctx.closePath();ctx.fillStyle=h.roof;ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#fff0d9';ctx.stroke();
+ for(let k=-2;k<=2;k++)line(-52+k*19,-89,0+k*9,-129,'#ffffff35',2);
+ rr(-55,-68,34,38,6,won||night?'#f6cf87':'#b5d5c4','#f8f6dd');line(-38,-66,-38,-31,'#f2e3c2',3);line(-55,-49,-22,-49,'#f2e3c2',3);
+ rr(21,-68,34,38,6,won||night?'#f6cf87':'#b5d5c4','#f8f6dd');line(38,-67,38,-31,'#f2e3c2',3);line(21,-49,54,-49,'#f2e3c2',3);
+ rr(-18,-45,36,66,6,'#9b6d5d','#fff2db');ellipse(9,-7,3,4,'#f8d6a0');
+ rr(-61,-97,122,28,10,'#fff6e7','#b77782');emoji(h.symbol,-49,-82,16);
+ textAt(h.short,11,-83,h.short.length>12?10:12,'#885669','center',false);
+ if(won){emoji('⭐',0,-164,24);ellipse(0,-19,8,7,'#f9e18b')}
+ else{ellipse(0,-19,6+Math.sin(t*4)*2,5+Math.sin(t*4)*2,'#ffdd9b')}
+ // Vasos de flores na entrada.
+ for(const a of [-1,1]){rr(a*46-10,7,20,17,5,'#ce9b86');emoji('🌸',a*46,2,18)}
+ ctx.restore();
+}
+function drawKitty(t){ctx.save();ctx.translate(980,477);ellipse(3,50,77,23,'#9c9b8760');
+ rr(-53,18,106,35,12,'#c4bdac','#f5ebd8');rr(-46,-8,92,33,9,'#e4d5bd','#fff4de');
+ ctx.translate(0,-33+Math.sin(t*1.6)*2);ellipse(0,20,32,30,'#fafbf7');
+ // Orelhas e rosto de uma gatinha original com laço.
+ ctx.beginPath();ctx.moveTo(-33,-20);ctx.lineTo(-39,-57);ctx.lineTo(-8,-44);ctx.lineTo(14,-45);ctx.lineTo(39,-57);ctx.lineTo(33,-20);ctx.closePath();ctx.fillStyle='#fffaf6';ctx.fill();ctx.strokeStyle='#e6d3d0';ctx.lineWidth=2;ctx.stroke();
+ ellipse(0,-26,43,35,'#fffaf6');ellipse(-17,-28,3,5,'#503e43');ellipse(17,-28,3,5,'#503e43');ellipse(0,-16,5,3,'#e9b27e');
+ for(let k=-1;k<=1;k++){line(-29,-17+k*6,-47,-20+k*9,'#9b8585',1.4);line(29,-17+k*6,47,-20+k*9,'#9b8585',1.4)}
+ // Laço vermelho.
+ ellipse(28,-54,12,9,'#e97d89');ellipse(49,-54,12,9,'#e97d89');ellipse(38,-54,6,6,'#c95467');
+ if(progress.stars.length===7){for(let i=0;i<8;i++){let a=t*.7+i*6.28/8;emoji(i%2?'✨':'💗',Math.cos(a)*86,Math.sin(a)*52-18,15)}}
+ ctx.restore();}
+function drawFountain(t){let x=1180,y=510;ellipse(x,y+10,59,32,'#e7d9bc');ellipse(x,y,53,31,'#91c5c9');ellipse(x,y-2,42,19,'#d0f0df');rr(x-18,y-37,36,35,9,'#d4c6b2');ellipse(x,y-38,25,9,'#a3d3d0');for(let i=0;i<8;i++){let a=i*6.28/8+t*.3;ellipse(x+Math.cos(a)*34,y-7+Math.sin(a)*15,2,3,'#f8fefe')}
+ ctx.beginPath();ctx.moveTo(x-13,y-46);ctx.quadraticCurveTo(x-22,y-76,x-36,y-49);ctx.moveTo(x+13,y-46);ctx.quadraticCurveTo(x+22,y-76,x+36,y-49);ctx.strokeStyle='#b7e6e7';ctx.lineWidth=4;ctx.stroke();}
+function drawExtras(t){
+ for(let i=0;i<7;i++){let x=765+i*72,y=396+Math.sin(i)*15;emoji('🌷',x,y,18)}
+ drawFountain(t);drawKitty(t);
+ // Banco e postes iluminados.
+ for(const [x,y] of [[828,515],[1120,392],[1120,630],[850,612]]){rr(x-25,y-3,50,13,5,'#ac846a');rr(x-25,y-18,50,14,5,'#9f785b');line(x-19,y+7,x-19,y+18,'#756758',4);line(x+19,y+7,x+19,y+18,'#756758',4)}
+ for(const [x,y] of [[795,415],[1140,430],[890,652],[1370,450]]){line(x,y-40,x,y+15,'#7e6c67',5);ellipse(x,y-47,10,16,'#eac786');ellipse(x,y-47,5,10,'#fff7cd')}
+ // Varal e decoração feita pela Priscila.
+ line(445,1038,560,1025,'#9d7868',3);for(let i=0;i<4;i++)emoji(['🧶','🎨','🧣','🖼️'][i],457+i*27,1047,24);
+ // Piquenique, fogueira, balão, correio.
+ rr(161,1092,97,69,8,'#f9f1e5','#cb7f82');for(let i=0;i<5;i++)line(163,1100+i*12,256,1100+i*12,'#da969a',5);emoji('🧺',205,1125,37);emoji('🥪',250,1124,23);
+ emoji('🪵',1650,1189,38);emoji('🔥',1650,1158+Math.sin(t*3)*3,38);
+ line(1440,518,1440,568,'#aa8c8d',2);emoji('🎈',1440,484+Math.sin(t*2)*10,62);
+ rr(1197,560,29,37,5,'#d6848c','#f7e6d2');rr(1201,571,21,6,3,'#fff0da');line(1211,597,1211,614,'#9d766e',4);
+ emoji('🎣',800,582+Math.sin(t*2)*2,29);emoji('🐊',355+Math.cos(t)*13,584+Math.sin(t*1.5)*5,36);emoji('🧽',1515+Math.sin(t)*14,785+Math.sin(t*2)*6,32);emoji('🐌',1230+Math.sin(t*.3)*15,808,27);
+ rr(635,533,46,28,4,'#ad8c64');line(650,562,650,575,'#8b6d54',4);emoji('💗',658,546,19);
+ for(let i=0;i<5;i++){let xx=100+i*370,yy=waterY(xx)-15+Math.sin(t*1.4+i)*9;emoji('🫧',xx,yy-42-((t*12+i*18)%35),17)}
+ for(const animal of terrain.animals){let {x,y,phase,type}=animal;let bx=x+Math.sin(t*.8+phase)*15,by=y+Math.cos(t*.9+phase)*7;emoji(type,bx,by,22)}
+ // Bichinhos noturnos vagam perto do riacho.
+ for(let i=0;i<10;i++){let x=(i*173+100)%1820,y=waterY(x)+87+Math.sin(i*4);ellipse(x+Math.sin(t*2+i)*10,y+Math.cos(t*2+i)*13,2.4,2.4,'#f8ecc0')}
+}
+function drawCharacters(t){
+ // O seguidor é desenhado atrás da protagonista, sem cobrir os nomes.
+ if(progress.met)drawPerson(renato.x,renato.y,'renato',t,renato.moving,renato.dir);
+ else drawPerson(renato.x,renato.y,'renato',t,false,2);
+ drawPerson(player.x,player.y,'priscila',t,player.moving,player.dir);
+ if(progress.met&&distance(player,renato)<60&&Math.sin(t*1.7)>.94)emoji('💞',(player.x+renato.x)/2,(player.y+renato.y)/2-66,17);
+}
+function drawPerson(x,y,which,t,moving,dir){
+ const p=which==='priscila',osc=moving?Math.sin(t*14)*3:Math.sin(t*2.7)*1.2;
+ ctx.save();ctx.translate(x,y);ellipse(0,14,23,9,'#54715a5b');
+ const jump=p&&player.jump>0?Math.sin(player.jump/.45*Math.PI)*17:0;
+ ctx.translate(0,osc-jump);
+ if(p&&player.spin>0)ctx.rotate((1-player.spin/.65)*Math.PI*2);
+ // Pernas e tênis.
+ rr(-13,0,11,23,4,p?'#89a8cc':'#28282d');rr(2,0,11,23,4,p?'#89a8cc':'#28282d');
+ rr(-15,18,14,7,3,p?'#faf9ec':'#45474a');rr(2,18,14,7,3,p?'#faf9ec':'#45474a');
+ // Braços e tronco.
+ rr(-22,-29,44,34,13,p?CONFIG.cores.jaqueta:CONFIG.cores.polo);
+ rr(-25,-24,11,29,6,p?'#795949':'#efece2');rr(14,-24,11,29,6,p?'#795949':'#efece2');
+ if(p){line(0,-26,0,3,'#e3b5a6',2);rr(-17,-31,34,10,4,'#f1c4d2');line(-15,-26,16,-26,'#a4bbc9',2);line(14,-27,23,5,'#e9b8cf',6);for(let i=0;i<3;i++)line(17+i*2,2,17+i*2,9,'#efc9dd',1)}
+ else{line(-8,-28,0,-18,'#aaa49a',2);line(8,-28,0,-18,'#aaa49a',2);rr(18,-1,7,4,2,'#c5d7df')}
+ // Cabelos e rostos em estilo bonequinhos chibi.
+ if(p)ellipse(0,-45,24,33,'#2b252c');
+ ellipse(0,-45,23,23,CONFIG.cores.pele);
+ if(p){ellipse(-14,-56,12,15,'#27232c');ellipse(10,-63,15,10,'#27232c');line(0,-66,-1,-56,'#4b343d',2);line(-13,-71,-13,-57,'#5d4148',2);line(9,-70,10,-57,'#5d4148',2)}
+ else{ellipse(-2,-66,23,13,'#29252b');ellipse(11,-68,14,9,'#29252b');ellipse(0,-31,12,5,'#584139')}
+ const blink=Math.sin(t*.66+(p?0:1.2))>.995;
+ if(dir!==0){
+  if(p){for(let side of [-1,1]){ellipse(side*9,-46,8,7,'#e6bca9');ctx.strokeStyle='#c7ad8d';ctx.lineWidth=2;ctx.beginPath();ctx.arc(side*9,-46,7,0,Math.PI*2);ctx.stroke()}line(-3,-46,3,-46,'#e0bfa8',1.5)}
+  else{rr(-19,-53,17,13,4,'#282831');rr(2,-53,17,13,4,'#282831');line(-2,-47,2,-47,'#282831',3)}
+  if(!blink){ellipse(-9,-45,1.8,2.2,'#352b2f');ellipse(9,-45,1.8,2.2,'#352b2f')}else line(-11,-45,-7,-45,'#332b2e',2);
+  ctx.beginPath();ctx.arc(0,-36,4,.1,Math.PI-.1);ctx.strokeStyle='#7e4a49';ctx.lineWidth=1.2;ctx.stroke();
+ }
+ if(p){ // Rosinha que ela leva em todas as aventuras.
+  line(23,-6,29,-27,'#679e6c',2);emoji('🌹',30,-31,17);
+ }
+ const label=p?'Priscila 💗':'Renato';
+ textAt(label,0,-97,13,'#fff7e9');
+ if(p&&player.idle>5&&Math.floor(t/3)%2===0)textAt('💤 Priguiça...',0,-120,12,'#fff');
+ ctx.restore();
+}
+function drawWaypoints(t){
+ let n=nextTarget(),a=10+Math.sin(t*4)*7;
+ ellipse(n.x,n.y+5,30+a*.3,11,'#fff1aa6a');
+ emoji('⬇️',n.x,n.y-91+Math.sin(t*3)*9,28);
+ for(let i=0;i<5;i++){let th=t+i*6.28/5;emoji('✨',n.x+Math.sin(th)*37,n.y+Math.cos(th)*19,11)}
+ for(let i=0;i<HEART_DATA.length;i++)if(!progress.hearts.includes(i)){let p=HEART_DATA[i];ellipse(p.x,p.y+9,16,5,'#62495a33');emoji('💛',p.x,p.y-9+Math.sin(t*3+i)*5,23)}
+ let nobj=game.nearest;if(game.mode==='world'&&nobj&&nobj.x!==undefined){ellipse(nobj.x,nobj.y,24+Math.sin(t*3)*5,10,'#fff3c888');emoji('✨',nobj.x,nobj.y-35,17)}
+}
+function drawSky(t){
+ // Ciclo de dia/noite: cerca de três minutos por volta completa.
+ let night=(Math.sin(t/29)+1)/2;ctx.save();const {w,h}=game.screen;
+ if(night>.55){ctx.fillStyle=`rgba(39,43,79,${(night-.55)*.55})`;ctx.fillRect(0,0,w,h);
+  for(let i=0;i<24;i++){let x=(i*211)%w,y=(i*97)%h;ctx.fillStyle=`rgba(255,247,213,${.12+.2*Math.sin(t+i)**2})`;ellipse(x,y,1.5,1.5,ctx.fillStyle)}}
+ else{let g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#ffe5ad13');g.addColorStop(1,'#faaf8b12');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)}
+ ctx.restore();
+}
+function render(t){
+ const {w,h,dpr}=game.screen,c=game.cam;
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle='#bdd6a4';ctx.fillRect(0,0,w,h);
+ ctx.save();ctx.translate(w/2-c.x*c.zoom,h/2-c.y*c.zoom);ctx.scale(c.zoom,c.zoom);
+ drawLand(t);drawWater(t);
+ for(const tree of terrain.trees)drawTree(tree,t);
+ for(const house of HOUSE_DATA)drawHouse(house,t);
+ drawExtras(t);drawWaypoints(t);drawCharacters(t);
+ for(const p of game.particles){ctx.globalAlpha=clamp(p.life,0,1);emoji(p.c,p.x,p.y,18)}ctx.globalAlpha=1;
+ ctx.restore();drawSky(t);
+}
+let previous=0;
+function tick(ms){let t=ms/1000,dt=clamp((ms-previous)/1000||.016,0,.04);previous=ms;
+ if(game.running){update(dt);render(t)}else{game.elapsed+=dt;render(t)}requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+// ======================= MÚSICA E EFEITOS (SEM ARQUIVOS EXTERNOS) =======================
+function initAudio(){if(!game.audio){const AC=window.AudioContext||window.webkitAudioContext;if(AC)try{game.audio=new AC()}catch{}}
+ if(game.audio&&game.audio.state==='suspended')game.audio.resume().catch(()=>{});
+ if(game.audio&&!game.audioTimer){game.music=true;game.audioTimer=setInterval(playMelody,720);playMelody();updateHud()}}
+function playSound(f=520,d=.16,vol=.025){if(!game.audio||!game.music)return;try{let a=game.audio,o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,a.currentTime);g.gain.exponentialRampToValueAtTime(vol,a.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+d+.02)}catch{}}
+let melodyIndex=0;
+function playMelody(){if(!game.music)return;const notes=[392,493.88,587.33,493.88,440,523.25,659.25,523.25,392,493.88,587.33,783.99,659.25,523.25,440,392];let n=notes[melodyIndex++%notes.length];playSound(n,.63,.009);if(melodyIndex%4===1)playSound(n/2,.7,.006)}
+$('sound').addEventListener('click',()=>{if(!game.audio){initAudio();return}game.music=!game.music;if(game.music&&game.audio.state==='suspended')game.audio.resume();updateHud();});
+// ======================= ÁLBUM, CONQUISTAS E ESTRELAS =======================
+function showAlbum(){const entries=progress.album.map(s=>`<div>💌 ${s}</div>`).join('');let ach=progress.achievements.map(s=>`<div>🏆 ${s}</div>`).join('');showModal('Álbum do nosso amor 💌',`<p>Um lugar para guardar tudo que a gente descobriu.</p><h3>Cartinhas e lembranças (${progress.album.length})</h3><div class="collection">${entries||'<div>Explore o mapa e encontre cartinhas e corações! 🌷</div>'}</div><h3>Conquistas (${progress.achievements.length})</h3><div class="collection">${ach||'<div>O primeiro encontro ainda está te esperando! 💗</div>'}</div>`)}
+function awardStar(id,message){
+ if(!progress.stars.includes(id)){progress.stars.push(id);player.spin=.8;player.jump=.6;spawnParticles(player.x,player.y,25,['⭐','💗','✨']);heartBurst(undefined,undefined,20);playSound(900,.35);addAlbum(`⭐ ${message}`);save();updateHud();earnAchievement('Mais uma estrela do nosso amor ⭐')}
+ const all=progress.stars.length===7;
+ showModal('Uma estrela só sua! ⭐',`<div class="emoji-big">${all?'🌟💖🌟':'⭐💗⭐'}</div><p style="text-align:center;font-size:17px"><b>${message}</b></p><p style="text-align:center">${all?'Você juntou as sete estrelas! A gatinha da praça está esperando por vocês para uma surpresa emocionante. 🎀':'Essa casinha agora tem sua estrela acesa. Continue passeando: ainda temos tanta história para viver!'}</p><p style="text-align:center"><button class="mainbtn" id="starClose">Continuar o passeio 🌷</button></p>`);
+ $('starClose').onclick=hideModal;
+}
+function openHouse(id){
+ if(id==='trabalho'&&!progress.met){meetRenato();return}
+ const games={trabalho:startPuzzle,yakisoba:()=>startFood('yakisoba'),restaurante:startQuiz,monte:startMemory,atelie:startAtelier,cinema:startCinema,abacaxi:()=>startFood('abacaxi')};games[id]();
+}
+// ======================= MINIGAME 1: YAKISOBA / 7: HAMBÚRGUER =======================
+const FOOD={
+ yakisoba:{title:'🍜 Nosso primeiro yakisoba',symbol:'🍜',items:[['🍝','Macarrão'],['🥬','Repolho'],['🥕','Cenoura'],['🥩','Carne'],['🥣','Molho']],wrong:[['🍦','Sorvete'],['🍭','Pirulito'],['🍿','Pipoca']],message:'Nosso primeiro encontro foi no Japan Trailer, e eu já sabia que ia te amar pra sempre.'},
+ abacaxi:{title:'🍍 Hambúrguer do amor',symbol:'🍔',items:[['🍞','Pão'],['🥬','Alface'],['🍅','Tomate'],['🥩','Hambúrguer'],['🧀','Queijo'],['🥒','Picles']],wrong:[['🍉','Melancia'],['🍫','Chocolate'],['🍦','Sorvete']],message:'Priguiça, você merece o hambúrguer mais gostoso do mundo, porque você é perfeita!'}
+};
+let foodState=null,foodTimer=null;
+function clearMiniTimers(){clearInterval(foodTimer);foodTimer=null;clearInterval(fishingTimer);fishingTimer=null}
+const previousHide=hideModal;
+hideModal=function(){clearMiniTimers();previousHide()};
+function startFood(id){let conf=FOOD[id];foodState={id,index:0,remaining:85,done:false};renderFood();foodTimer=setInterval(()=>{if(game.mode!=='mini'||!foodState||foodState.id!==id)return;foodState.remaining--;if($('foodTime'))$('foodTime').textContent=foodState.remaining+'s';if(foodState.remaining<=0){foodState.remaining=85;foodState.index=0;toast('Ops! A fome venceu o relógio. Vamos tentar de novo! 🍜');renderFood()}},1000)}
+function renderFood(){let s=foodState,c=FOOD[s.id];if(s.index>=c.items.length){clearInterval(foodTimer);foodTimer=null;foodComplete();return}
+ let wanted=c.items[s.index],options=[wanted,...c.wrong].sort(()=>Math.random()-.5);
+ const items=options.map(o=>`<button class="ingredient" data-name="${o[1]}">${o[0]}<span>${o[1]}</span></button>`).join('');
+ showModal(c.title,`<p>Priguiça, escolha o ingrediente certo na esteira! A gente pode tentar quantas vezes quiser. 😋</p><div class="progress"><div style="width:${s.index/c.items.length*100}%"></div></div><p><b>Ingrediente ${s.index+1}/${c.items.length}:</b> ${wanted[0]} ${wanted[1]} <span style="float:right">⏳ <b id="foodTime">${s.remaining}s</b></span></p><div class="belt">${items}</div><div class="emoji-big">${c.symbol}</div><div class="feedback" id="foodFeedback">O segredo é amor e uma Priguiça com fome. 💗</div>`,'Monte a receita com os ingredientes na ordem indicada.');
+ $('modalBody').querySelectorAll('[data-name]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.name===wanted[1]){s.index++;playSound(660,.16);heartBurst(innerWidth/2,innerHeight/2,5);renderFood()}else{$('foodFeedback').textContent='Esse ingrediente ficou engraçado! Tente outro, Priguiça. 😂';playSound(210,.13)}}));
+}
+function foodComplete(){let s=foodState,c=FOOD[s.id];if(s.id==='yakisoba'){earnAchievement('Priguiça Faminta 🍜');awardStar(s.id,c.message);return}
+ showModal('Seu hambúrguer ficou perfeito! 🍔',`<div class="emoji-big">🍔💗</div><p>${c.message}</p><p>Quer brincar também de pegar cinco águas-vivas fofinhas?</p><div class="choices"><button class="choice" id="jellyGo">🪼 Caçar águas-vivas!</button><button class="choice" id="burgerDone">⭐ Receber minha estrela</button></div>`);
+ $('jellyGo').onclick=()=>startJellies(0);$('burgerDone').onclick=()=>awardStar(s.id,c.message);
+}
+function startJellies(n){let s=foodState,c=FOOD.abacaxi;
+ if(n>=5){earnAchievement('Caçadora de águas-vivas 🪼');awardStar('abacaxi',c.message);return}
+ let choices=Array.from({length:9},(_,i)=>`<button class="choice" style="font-size:31px" data-jelly="${i}">${['🪼','🫧','🐠'][i%3]}</button>`).join('');
+ showModal('Caça às águas-vivas 🪼',`<p>Pegue cinco águas-vivas sem se preocupar em perder! <b>${n}/5</b></p><div class="choices" style="grid-template-columns:repeat(3,1fr)">${choices}</div><div class="feedback">${CONFIG.elogios[(n*7)%CONFIG.elogios.length]}</div>`);
+ $('modalBody').querySelectorAll('[data-jelly]').forEach(b=>b.onclick=()=>{if(b.textContent.includes('🪼')){heartBurst();playSound(760,.12);startJellies(n+1)}else toast('Bolhinha! A água-viva está em outro lugar 🫧')});
+}
+// ======================= MINIGAME 2: QUIZ DO NOSSO AMOR =======================
+let quizIndex=0;
+function startQuiz(){quizIndex=0;renderQuestion('quiz')}
+function renderQuestion(which){let isFilm=which==='filmes',q=(isFilm?CONFIG.filmes:CONFIG.quiz),idx=isFilm?filmIndex:quizIndex;
+ if(idx>=q.length){if(isFilm){cinemaSlides(0);return}earnAchievement('Especialista no nosso amor 💗');awardStar('restaurante','Você lembra da nossa história com tanto carinho quanto eu! Nosso primeiro Dia dos Namorados na Cachaçaria Água Doce foi especial demais.');return}
+ let cur=q[idx];showModal(isFilm?'🎬 Adivinhe o filme':'💞 Quiz do nosso amor',`<p style="text-align:center"><b>Pergunta ${idx+1} de ${q.length}</b></p><div class="progress"><div style="width:${idx/q.length*100}%"></div></div>${isFilm?`<div class="emoji-big">${cur.e}</div>`:''}<h3 style="text-align:center">${cur.p}</h3><div class="choices">${cur.o.map((answer,i)=>`<button class="choice" data-answer="${i}">${answer}</button>`).join('')}</div><div id="quizFeedback" class="feedback">${isFilm?'A sessão está só começando! 🍿':'Pode errar e tentar de novo, Priguiça! 💗'}</div>`);
+ $('modalBody').querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>{let answer=Number(b.dataset.answer);if(answer===cur.a){heartBurst(innerWidth/2,innerHeight/2,7);playSound(690,.17);if(isFilm)filmIndex++;else quizIndex++;renderQuestion(which)}else{$('quizFeedback').textContent='Ops, Priguiça! O Zé Jacaré acredita em você. Tente outra! 😘';playSound(220,.1)}});
+}
+// ======================= MINIGAME 3: QUEBRA-CABEÇA DESLIZANTE 3x3 =======================
+let puzzle=[];
+function startPuzzle(){puzzle=[0,1,2,3,4,5,6,7,8];for(let i=0;i<90;i++){let blank=puzzle.indexOf(8);let candidates=[blank-3,blank+3,blank%3?blank-1:-1,blank%3<2?blank+1:-1].filter(x=>x>=0&&x<9);let swap=candidates[Math.floor(Math.random()*candidates.length)];[puzzle[blank],puzzle[swap]]=[puzzle[swap],puzzle[blank]]}if(puzzle.every((v,i)=>v===i)){[puzzle[7],puzzle[8]]=[puzzle[8],puzzle[7]]}renderPuzzle()}
+function renderPuzzle(){let tiles=puzzle.map((val,pos)=>{if(val===8)return '<div class="tile empty" aria-label="Espaço vazio"></div>';let row=Math.floor(val/3),col=val%3;
+ const img=CONFIG.fotoQuebraCabeca?`background-image:url('${CONFIG.fotoQuebraCabeca}');background-size:300% 300%;background-position:${col*50}% ${row*50}%;`:'';
+ return `<button class="tile" data-puz="${pos}" style="${img}">${CONFIG.fotoQuebraCabeca?'':`<span class="tile-emoji">${['🌷','🏡','💗','💕','👩','👨','🍜','⛰️'][val]}</span>`}<small>${val+1}</small></button>`}).join('');
+ showModal('🏡 O dia em que te vi',`<p>Deslize as peças para colocá-las na ordem de 1 a 8. Toque em uma peça ao lado do espaço vazio.</p><div class="tiles">${tiles}</div><p style="text-align:center;color:#ad7792;font-size:13px">Aquela primeira vez no trabalho mudou minha vida. 💗</p><p style="text-align:center"><button class="secondary" id="puzShuffle">Misturar novamente ↻</button></p>`);
+ $('modalBody').querySelectorAll('[data-puz]').forEach(b=>b.onclick=()=>{let pos=Number(b.dataset.puz),blank=puzzle.indexOf(8);if(Math.abs(Math.floor(pos/3)-Math.floor(blank/3))+Math.abs(pos%3-blank%3)!==1){toast('Mova uma peça vizinha ao espacinho vazio. 💗');return}[puzzle[pos],puzzle[blank]]=[puzzle[blank],puzzle[pos]];playSound(470,.09);if(puzzle.every((v,i)=>v===i))awardStar('trabalho','Foi no trabalho que eu me apaixonei por você no primeiro momento em que te vi. E continuaria escolhendo você sempre.');else renderPuzzle()});
+ $('puzShuffle').onclick=startPuzzle;
+}
+// ======================= MINIGAME 4: JOGO DA MEMÓRIA =======================
+let memoryCards=[],memoryFlipped=[],memoryFound=0,memoryBusy=false;
+function startMemory(){let symbols=['🍜','⛰️','🍽️','🎨','🧶','🎬','🐊','😴','🐱','🧽'];memoryCards=[...symbols,...symbols].sort(()=>Math.random()-.5);memoryFlipped=[];memoryFound=0;memoryBusy=false;renderMemory()}
+function renderMemory(){let grid=memoryCards.map((s,i)=>`<button class="memorycard ${memoryFlipped.includes(i)?'revealed':''} ${memoryCards[i]===null?'matched':''}" data-memory="${i}">${s===null?'💗':memoryFlipped.includes(i)?s:'?'}</button>`).join('');
+ showModal('⛰️ Lembranças de Monte Verde',`<p>Encontre os 10 pares de lembranças da nossa história. Cada combinação é um pedacinho de nós! 💗</p><p><b>${memoryFound}/10 pares</b></p><div class="memorygrid">${grid}</div><div class="feedback" id="memoryFeedback">Uma viagem especial, e tantas outras ainda por vir...</div>`);
+ $('modalBody').querySelectorAll('[data-memory]').forEach(b=>b.onclick=()=>{let i=Number(b.dataset.memory);if(memoryBusy||memoryFlipped.includes(i)||memoryCards[i]===null)return;memoryFlipped.push(i);playSound(530,.12);if(memoryFlipped.length===2){memoryBusy=true;let[a,c]=memoryFlipped;renderMemory();if(memoryCards[a]===memoryCards[c]){let symbol=memoryCards[a];memoryFound++;setTimeout(()=>{memoryCards[a]=null;memoryCards[c]=null;memoryFlipped=[];memoryBusy=false;addAlbum(`⛰️ Memória encontrada: ${symbol} ${nextCompliment()}`);if(memoryFound===10)awardStar('monte','Monte Verde foi nossa primeira viagem e o começo de um mundo inteiro de aventuras lado a lado.');else if(game.mode==='mini')renderMemory()},520)}else{setTimeout(()=>{memoryFlipped=[];memoryBusy=false;if(game.mode==='mini')renderMemory()},850)}}else renderMemory();});
+}
+// ======================= MINIGAME 5: PINTURA E CROCHÊ =======================
+let crochetPoints=[],crochetIndex=0;
+function startAtelier(){game.painted=false;game.knitted=false;game.paintingColors={};game.selectedColor='#ef91ac';crochetIndex=0;crochetPoints=[];renderAtelier('paint')}
+function paintSVG(){let colors=game.paintingColors;const region=(id,shape)=>shape.replace('fill="COLOR"',`fill="${colors[id]||'#fff5e9'}" data-region="${id}"`);
+ return `<svg class="painting" viewBox="0 0 280 260" role="img" aria-label="Pinte o coração do nosso amor"><rect width="280" height="260" fill="#fffbef"/><circle cx="140" cy="130" r="100" fill="#fff1e9"/>${region('heart','<path d="M140 220 C103 185 32 137 50 80 C62 35 117 44 140 76 C170 37 225 40 235 82 C250 141 186 188 140 220Z" fill="COLOR"/>')}${region('star1','<path d="M89 80l6 17 17 2-13 11 4 17-14-9-14 9 4-17-13-11 17-2Z" fill="COLOR"/>')}${region('star2','<path d="M188 82l6 17 17 2-13 11 4 17-14-9-14 9 4-17-13-11 17-2Z" fill="COLOR"/>')}${region('heart2','<path d="M140 175 C115 147 98 132 108 113 C119 94 136 108 140 114 C148 102 166 98 174 117 C183 139 157 159 140 175Z" fill="COLOR"/>')}${region('bow','<path d="M125 52 C86 23 83 73 125 72 Q140 80 155 72 C194 69 188 20 155 52 Q140 43 125 52Z" fill="COLOR"/>')}<text x="140" y="249" text-anchor="middle" fill="#ad7a85" font-size="11">Uma obra feita com amor 💗</text></svg>`}
+function renderAtelier(tab){let btn=`<div class="choices"><button class="choice" id="atPaint">🎨 Pintar ${game.painted?'✓':''}</button><button class="choice" id="atCrochet">🧶 Crochê ${game.knitted?'✓':''}</button></div>`;
+ let content=tab==='paint'?`${btn}<p>Pinte as cinco partes do desenho escolhendo uma cor!</p><div class="paint-palette">${['#ef91ac','#f3c266','#9fca9c','#a7c8ee','#c3a3d6','#e79179'].map(c=>`<button style="background:${c}" data-color="${c}" aria-label="Cor ${c}"></button>`).join('')}</div>${paintSVG()}<div class="feedback">Regiões pintadas: ${Object.keys(game.paintingColors).length}/5</div>`:
+ `${btn}<p>Toque nos pontos numerados de 1 a 8 para costurar um coraçãozinho de lã. 🧶</p><svg class="crochet" id="crochetSVG" viewBox="0 0 340 270"><path d="M170 235 C138 203 35 156 63 90 C87 32 145 55 170 87 C199 43 271 42 283 102 C298 160 212 207 170 235" fill="none" stroke="#ead7d6" stroke-width="5" stroke-dasharray="8 10"/><polyline points="${crochetPoints.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#cf6c91" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>${[[170,235],[93,180],[63,115],[89,67],[143,67],[192,65],[265,90],[255,165]].map(([x,y],i)=>`<circle data-point="${i}" cx="${x}" cy="${y}" r="${i===crochetIndex?17:14}" fill="${i<crochetIndex?'#a3c9a5':'#e5a8bd'}"/><text x="${x}" y="${y+5}" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle" pointer-events="none">${i+1}</text>`).join('')}</svg><div class="feedback">Pontos costurados: ${crochetIndex}/8</div>`;
+ if(game.painted&&game.knitted){earnAchievement('Artista do coração 🎨');awardStar('atelie','Você pinta, desenha e faz crochê com tanto talento! Mas a sua obra-prima mais linda é ser você mesma.');return}
+ showModal('🎨 Ateliê da Priscila',content);$('atPaint').onclick=()=>renderAtelier('paint');$('atCrochet').onclick=()=>renderAtelier('crochet');
+ if(tab==='paint'){
+  $('modalBody').querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{game.selectedColor=b.dataset.color;$('modalBody').querySelectorAll('[data-color]').forEach(c=>c.classList.remove('sel'));b.classList.add('sel')});
+  $('modalBody').querySelectorAll('[data-region]').forEach(p=>p.addEventListener('click',()=>{game.paintingColors[p.dataset.region]=game.selectedColor;playSound(660,.11);if(Object.keys(game.paintingColors).length>=5){game.painted=true;toast('Seu quadro ficou lindo! Agora vamos ao crochê. 🎨');renderAtelier('crochet')}else renderAtelier('paint')}));
+ }else $('modalBody').querySelectorAll('[data-point]').forEach(p=>p.addEventListener('click',()=>{let i=Number(p.dataset.point);if(i!==crochetIndex){toast(`Comece pelo ponto ${crochetIndex+1}, minha artista! 🧶`);return}let points=[[170,235],[93,180],[63,115],[89,67],[143,67],[192,65],[265,90],[255,165]];crochetPoints.push(points[i]);crochetIndex++;playSound(470+i*30,.14);if(crochetIndex>=8){game.knitted=true;toast('Seu coração de crochê ficou perfeito! 🧶');renderAtelier('paint')}else renderAtelier('crochet')}));
+}
+// ======================= MINIGAME 6: CINEMA =======================
+let filmIndex=0;
+function startCinema(){filmIndex=0;renderQuestion('filmes')}
+const cinemaMessages=['Eu te escolheria em todas as cenas da minha vida. 🎬','Uma pipoca, um filme e você comigo: o final perfeito. 🍿','Até os créditos seriam mais bonitos com seu sorriso, Priguiça. 💗'];
+function cinemaSlides(index){if(index>=cinemaMessages.length){awardStar('cinema','Não importa qual filme a gente assista. Minha história favorita é a nossa.');return}
+ showModal('🎥 Sessão especial para Priscila',`<div class="slide">🍿✨<div>${cinemaMessages[index]}</div>💗</div><p style="text-align:center"><button class="mainbtn" id="nextSlide">${index===cinemaMessages.length-1?'Ganhar minha estrela ⭐':'Próxima cena ➜'}</button></p>`,'O cinema mais romântico deste mundinho é só nosso.');$('nextSlide').onclick=()=>cinemaSlides(index+1)}
+// ======================= PESCARIA NA BEIRA DO RIACHO =======================
+let fishingTimer=null,fishingPhase=0;
+function startFishing(){fishingPhase=0;showModal('🎣 Pesca dos elogios',`<p>Espere a boia chegar à faixa rosa e tente fisgar o peixinho! Não tem problema se errar.</p><div style="background:#e7e1d5;border-radius:18px;height:36px;position:relative;overflow:hidden;margin:24px 0"><div style="position:absolute;left:43%;width:15%;height:100%;background:#ef9bb1b9"></div><div id="float" style="position:absolute;left:0;top:2px;font-size:26px">🎣</div></div><p style="text-align:center"><button id="catchFish" class="mainbtn">Puxar a linha! 🐟</button></p><div id="fishFeed" class="feedback">Olha a boia…</div>`);
+ $('catchFish').onclick=()=>{if(fishingPhase>.43&&fishingPhase<.58){game.fishes++;playSound(860,.3);heartBurst();let msg=nextCompliment();addAlbum('🐟 Peixinho: '+msg);$('fishFeed').textContent=`🐟 Você pescou! ${msg}`;toast('Um peixinho do amor! 🐟');}else $('fishFeed').textContent='O peixe era ligeiro, mas você é mais! Tente outra vez. 😄'};
+ fishingTimer=setInterval(()=>{fishingPhase=(Math.sin(Date.now()/930)+1)/2;if($('float'))$('float').style.left=`${fishingPhase*89}%`},50);
+}
+// ======================= A CARTA E O FINAL SURPRESA =======================
+let finalTyping=null;
+function startFinal(){clearMiniTimers();heartBurst(innerWidth/2,innerHeight/2,26);spawnParticles(980,480,30,['🌸','💗','✨']);playSound(780,.4);
+ showModal('💌 Uma carta para minha Priguiça',`<div class="letter" id="letterText"></div><p style="text-align:center"><button class="mainbtn" id="letterNext">Mostrar toda a carta 💗</button></p>`,'Você chegou até aqui. E isso é só o começo da nossa história.');
+ const area=$('letterText'),btn=$('letterNext');let pos=0,txt=CONFIG.cartaFinal;
+ clearInterval(finalTyping);finalTyping=setInterval(()=>{pos=Math.min(txt.length,pos+4);if(area.isConnected)area.textContent=txt.slice(0,pos);if(pos===txt.length){clearInterval(finalTyping);if(btn.isConnected)btn.textContent='Continuar para a surpresa 💍'}},20);
+ btn.onclick=()=>{if(pos<txt.length){pos=txt.length;area.textContent=txt;clearInterval(finalTyping);btn.textContent='Continuar para a surpresa 💍'}else{clearInterval(finalTyping);showProposal()}};
+}
+function showProposal(){heartBurst(innerWidth/2,innerHeight/2,35);showModal('💍 Uma pergunta muito importante',`<div class="emoji-big">👩🏻‍❤️‍👨🏽</div><h2 style="text-align:center;font-family:Georgia,serif;color:#bd7191">Priguiça, aceita continuar sendo minha para sempre? 💍💗</h2><p style="text-align:center">Prometo continuar te escolhendo, rindo com você e dividindo a vida, as aventuras e os yakisobas.</p><div class="choices"><button class="mainbtn" id="yes">Sim! 💗</button><button class="mainbtn" id="ofCourse">Com certeza! 💍</button></div>`);
+ $('yes').onclick=acceptLove;$('ofCourse').onclick=acceptLove;
+}
+function acceptLove(){progress.finished=true;addAlbum('💗 Sim! Nosso amor continua em cada nova aventura.');save();updateHud();earnAchievement('Um amor para todas as estações 💍');heartBurst(innerWidth/2,innerHeight/2,45);playSound(880,.4);
+ let gallery=CONFIG.fotos.length?CONFIG.fotos.map((src,i)=>`<div class="photo-card"><img src="${src}" alt="Nossa lembrança ${i+1}" onerror="this.replaceWith(document.createTextNode('💗 Nossa lembrança'))"></div>`).join(''):
+ '<div class="photo-card">📸<br>Nossa primeira foto</div><div class="photo-card">⛰️<br>Monte Verde</div><div class="photo-card">🍜<br>Primeiro encontro</div>';
+ showModal('✨ O nosso para sempre começa aqui',`<div class="emoji-big">💞🎆💞</div><h2 style="text-align:center;font-family:Georgia,serif;color:#ad6b82">Eu te amo, Priscila!</h2><p style="text-align:center">“E viveram felizes” é pequeno demais. Eu quero viver <b>cada dia</b> feliz com você. Com amor, Renato (Zé Jacaré) 🐊💗</p><div class="photo-grid">${gallery}</div><p style="text-align:center"><button class="mainbtn" id="continueWorld">Continuar passeando juntinhos 🌷</button></p>`);
+ $('continueWorld').onclick=()=>{hideModal();heartBurst(innerWidth/2,innerHeight/2,15);toast('Você pode explorar este mundinho sempre que quiser! 💗')};
+}
+// Fechar um minigame cancela a digitação da carta sem perder progresso.
+const closeBeforeFinal=hideModal;
+hideModal=function(){clearInterval(finalTyping);closeBeforeFinal()};
+// Inicialização do HUD e término do HTML. Todo o jogo funciona sem bibliotecas.
+updateHud();
+</script>
+</body>
+</html>
