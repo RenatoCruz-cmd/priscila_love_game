@@ -277,44 +277,71 @@ document.addEventListener('keydown',e=>{
  game.keys[k]=true;
 });
 document.addEventListener('keyup',e=>game.keys[e.key.toLowerCase()]=false);
-window.addEventListener('blur',()=>{game.keys={};game.touch={x:0,y:0};resetStick()});
-const stick=$('joy'),knob=$('joyKnob');let joyPointer=null;
-function resetStick(){knob.style.transform='translate(0,0)'}
-function updateStick(e){let r=stick.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),mag=Math.hypot(dx,dy),limit=36;if(mag>limit){dx=dx/mag*limit;dy=dy/mag*limit}game.touch={x:dx/limit,y:dy/limit};knob.style.transform=`translate(${dx}px,${dy}px)`;game.target=null;}
-stick.addEventListener('pointerdown',e=>{e.preventDefault();joyPointer=e.pointerId;try{stick.setPointerCapture(joyPointer)}catch{}updateStick(e)});
-stick.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)updateStick(e)});
-document.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)updateStick(e)});
-document.addEventListener('pointerup',e=>{if(e.pointerId===joyPointer)stopStick(e)});
-document.addEventListener('pointercancel',e=>{if(e.pointerId===joyPointer)stopStick(e)});
-
-function stopStick(e){if(joyPointer===null||e.pointerId===joyPointer){joyPointer=null;game.touch={x:0,y:0};resetStick()}}
-stick.addEventListener('pointerup',stopStick);stick.addEventListener('pointercancel',stopStick);
-// Suporte adicional a Safari/iOS: toque e arraste sem depender de Pointer Events.
-let touchJoyId=null;
-stick.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];touchJoyId=t.identifier;updateStick(t)},{passive:false});
-stick.addEventListener('touchmove',e=>{e.preventDefault();const t=Array.from(e.touches).find(t=>t.identifier===touchJoyId);if(t)updateStick(t)},{passive:false});
-document.addEventListener('touchmove',e=>{if(touchJoyId===null)return;const t=Array.from(e.touches).find(t=>t.identifier===touchJoyId);if(t){e.preventDefault();updateStick(t)}},{passive:false});
-
-function releaseTouchJoy(e){if(touchJoyId!==null&&Array.from(e.changedTouches).some(t=>t.identifier===touchJoyId)){touchJoyId=null;game.touch={x:0,y:0};resetStick()}}
-stick.addEventListener('touchend',releaseTouchJoy,{passive:false});
-stick.addEventListener('touchcancel',releaseTouchJoy,{passive:false});
-$('touchInteract').addEventListener('touchend',e=>{e.preventDefault();interact()},{passive:false});
+window.addEventListener('blur',()=>{game.keys={};releaseJoystick()});
+const stick=$('joy'),knob=$('joyKnob');
+let activeJoystickPointer=null,activeJoystickTouch=null;
+function resetStick(){knob.style.transform='translate(0px,0px)'}
+function applyJoystick(clientX,clientY){
+ const rect=stick.getBoundingClientRect();
+ let dx=clientX-(rect.left+rect.width/2),dy=clientY-(rect.top+rect.height/2);
+ const length=Math.hypot(dx,dy),radius=36;
+ if(length>radius){dx=dx/length*radius;dy=dy/length*radius}
+ game.touch.x=dx/radius;game.touch.y=dy/radius;
+ game.target=null;
+ knob.style.transform='translate('+dx+'px,'+dy+'px)';
+ // O tutorial não deve impedir a personagem de andar no celular.
+ if(game.running&&game.mode==='dialog'&&length>12)nextDialog();
+}
+function releaseJoystick(){
+ activeJoystickPointer=null;activeJoystickTouch=null;
+ game.touch.x=0;game.touch.y=0;resetStick();
+}
+stick.style.touchAction='none';
+stick.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='touch')return;
+ e.preventDefault();activeJoystickPointer=e.pointerId;
+ applyJoystick(e.clientX,e.clientY);
+},{passive:false});
+document.addEventListener('pointermove',e=>{
+ if(activeJoystickPointer===e.pointerId){e.preventDefault();applyJoystick(e.clientX,e.clientY)}
+},{passive:false});
+document.addEventListener('pointerup',e=>{if(activeJoystickPointer===e.pointerId)releaseJoystick()});
+document.addEventListener('pointercancel',e=>{if(activeJoystickPointer===e.pointerId)releaseJoystick()});
+stick.addEventListener('touchstart',e=>{
+ e.preventDefault();e.stopPropagation();
+ const t=e.changedTouches[0];activeJoystickTouch=t.identifier;
+ applyJoystick(t.clientX,t.clientY);
+},{passive:false});
+document.addEventListener('touchmove',e=>{
+ if(activeJoystickTouch===null)return;
+ const t=Array.from(e.touches).find(t=>t.identifier===activeJoystickTouch);
+ if(t){e.preventDefault();applyJoystick(t.clientX,t.clientY)}
+},{passive:false});
+document.addEventListener('touchend',e=>{
+ if(activeJoystickTouch!==null&&Array.from(e.changedTouches).some(t=>t.identifier===activeJoystickTouch))releaseJoystick();
+});
+document.addEventListener('touchcancel',e=>{
+ if(activeJoystickTouch!==null&&Array.from(e.changedTouches).some(t=>t.identifier===activeJoystickTouch))releaseJoystick();
+});
 $('touchInteract').addEventListener('click',interact);
+$('touchInteract').addEventListener('touchend',e=>{e.preventDefault();interact()},{passive:false});
 $('startBtn').addEventListener('click',()=>{game.running=true;game.mode='world';$('startOverlay').classList.add('hidden');initAudio();updateHud();dialog('💌 Renato','Bem-vinda ao nosso mundinho, Priguiça! Para começar, vá à Casa do Trabalho. Tem alguém muito apaixonado esperando por você... 🐊💗')});
 $('where').addEventListener('click',()=>{const n=nextTarget();spawnParticles(n.x,n.y,15,['✨','💗']);dialog('🧭 Zé Jacaré',n.label+' Siga a seta e o brilho dourado pelo mapa!')});
 $('album').addEventListener('click',showAlbum);
 $('restart').addEventListener('click',()=>{if(confirm('Quer apagar as estrelas, os corações e recomeçar nossa história? 💗')){progress=defaultSave();player.x=440;player.y=458;renato.x=410;renato.y=328;game.trail=[];game.target=null;save();updateHud();hideModal();toast('Nosso amor merece viver o começo de novo! 💗')}});
 function update(dt){
  game.elapsed+=dt;game.frame++;
- if(game.mode==='world'||(game.mode==='dialog'&&Math.hypot(game.touch.x,game.touch.y)>.15)){
+ if(game.mode==='world'){
   let vx=Number(game.keys['d']||game.keys['arrowright'])-Number(game.keys['a']||game.keys['arrowleft'])+game.touch.x;
   let vy=Number(game.keys['s']||game.keys['arrowdown'])-Number(game.keys['w']||game.keys['arrowup'])+game.touch.y;
   if(Math.hypot(vx,vy)<.09&&game.target){let dx=game.target.x-player.x,dy=game.target.y-player.y,dist=Math.hypot(dx,dy);if(dist>12){vx=dx/dist;vy=dy/dist}else game.target=null}
   const m=Math.hypot(vx,vy);player.moving=m>.09;
   if(player.moving){vx/=m;vy/=m;player.dir=Math.abs(vx)>Math.abs(vy)?(vx>0?1:3):(vy>0?2:0);const step=CONFIG.mundo.velocidade*dt;
    let nx=player.x+vx*step,ny=player.y+vy*step;
-   if(!collide(nx,player.y))player.x=nx;else if(game.target)game.target=null;
-   if(!collide(player.x,ny))player.y=ny;else if(game.target)game.target=null;
+   if(!collide(nx,player.y))player.x=nx;
+   else if(game.target)game.target=null;
+   if(!collide(player.x,ny))player.y=ny;
+   else if(game.target)game.target=null;
    player.step+=dt*11;player.idle=0;
    if(game.elapsed-game.lastStep>.1){game.lastStep=game.elapsed;if(Math.random()<.32)spawnParticles(player.x,player.y+12,1,['🍃','🌸']);}
   }else{player.idle+=dt;player.step*=.94}
