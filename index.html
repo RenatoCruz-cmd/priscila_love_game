@@ -281,10 +281,18 @@ window.addEventListener('blur',()=>{game.keys={};game.touch={x:0,y:0};resetStick
 const stick=$('joy'),knob=$('joyKnob');let joyPointer=null;
 function resetStick(){knob.style.transform='translate(0,0)'}
 function updateStick(e){let r=stick.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),mag=Math.hypot(dx,dy),limit=36;if(mag>limit){dx=dx/mag*limit;dy=dy/mag*limit}game.touch={x:dx/limit,y:dy/limit};knob.style.transform=`translate(${dx}px,${dy}px)`;game.target=null;}
-stick.addEventListener('pointerdown',e=>{joyPointer=e.pointerId;stick.setPointerCapture(joyPointer);updateStick(e)});
+stick.addEventListener('pointerdown',e=>{e.preventDefault();joyPointer=e.pointerId;try{stick.setPointerCapture(joyPointer)}catch{}updateStick(e)});
 stick.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)updateStick(e)});
 function stopStick(e){if(joyPointer===null||e.pointerId===joyPointer){joyPointer=null;game.touch={x:0,y:0};resetStick()}}
 stick.addEventListener('pointerup',stopStick);stick.addEventListener('pointercancel',stopStick);
+// Suporte adicional a Safari/iOS: toque e arraste sem depender de Pointer Events.
+let touchJoyId=null;
+stick.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];touchJoyId=t.identifier;updateStick(t)},{passive:false});
+stick.addEventListener('touchmove',e=>{e.preventDefault();const t=Array.from(e.touches).find(t=>t.identifier===touchJoyId);if(t)updateStick(t)},{passive:false});
+function releaseTouchJoy(e){if(touchJoyId!==null&&Array.from(e.changedTouches).some(t=>t.identifier===touchJoyId)){touchJoyId=null;game.touch={x:0,y:0};resetStick()}}
+stick.addEventListener('touchend',releaseTouchJoy,{passive:false});
+stick.addEventListener('touchcancel',releaseTouchJoy,{passive:false});
+$('touchInteract').addEventListener('touchend',e=>{e.preventDefault();interact()},{passive:false});
 $('touchInteract').addEventListener('click',interact);
 $('startBtn').addEventListener('click',()=>{game.running=true;game.mode='world';$('startOverlay').classList.add('hidden');initAudio();updateHud();dialog('💌 Renato','Bem-vinda ao nosso mundinho, Priguiça! Para começar, vá à Casa do Trabalho. Tem alguém muito apaixonado esperando por você... 🐊💗')});
 $('where').addEventListener('click',()=>{const n=nextTarget();spawnParticles(n.x,n.y,15,['✨','💗']);dialog('🧭 Zé Jacaré',n.label+' Siga a seta e o brilho dourado pelo mapa!')});
@@ -463,18 +471,18 @@ function drawPerson(x,y,which,t,moving,dir){
  rr(-13,0,11,23,4,p?'#89a8cc':'#28282d');rr(2,0,11,23,4,p?'#89a8cc':'#28282d');
  rr(-15,18,14,7,3,p?'#faf9ec':'#45474a');rr(2,18,14,7,3,p?'#faf9ec':'#45474a');
  // Braços e tronco.
- rr(-22,-29,44,34,13,p?CONFIG.cores.jaqueta:CONFIG.cores.polo);
- rr(-25,-24,11,29,6,p?'#795949':'#efece2');rr(14,-24,11,29,6,p?'#795949':'#efece2');
- if(p){line(0,-26,0,3,'#e3b5a6',2);rr(-17,-31,34,10,4,'#f1c4d2');line(-15,-26,16,-26,'#a4bbc9',2);line(14,-27,23,5,'#e9b8cf',6);for(let i=0;i<3;i++)line(17+i*2,2,17+i*2,9,'#efc9dd',1)}
+ rr(-22,-29,44,34,13,p?'#684437':'#f5f2eb');
+ rr(-25,-24,11,29,6,p?'#c58e72':'#d6a083');rr(14,-24,11,29,6,p?'#c58e72':'#d6a083');
+ if(p){line(-11,-29,-11,-20,'#3b2929',2);line(11,-29,11,-20,'#3b2929',2);rr(-17,-21,34,23,8,'#684437')}
  else{line(-8,-28,0,-18,'#aaa49a',2);line(8,-28,0,-18,'#aaa49a',2);rr(18,-1,7,4,2,'#c5d7df')}
  // Cabelos e rostos em estilo bonequinhos chibi.
- if(p)ellipse(0,-45,24,33,'#2b252c');
- ellipse(0,-45,23,23,CONFIG.cores.pele);
- if(p){ellipse(-14,-56,12,15,'#27232c');ellipse(10,-63,15,10,'#27232c');line(0,-66,-1,-56,'#4b343d',2);line(-13,-71,-13,-57,'#5d4148',2);line(9,-70,10,-57,'#5d4148',2)}
+ if(p){ellipse(0,-65,21,17,'#322420');for(let j=0;j<8;j++){let th=j*Math.PI/4;ellipse(Math.cos(th)*17,-67+Math.sin(th)*12,8,8,'#392823')}}
+ ellipse(0,-45,23,23,p?'#c58d72':'#c99378');
+ if(p){for(let j=0;j<6;j++){ellipse(-17+j*7,-66+(j%2)*3,6,7,'#36251f')}ellipse(-20,-50,7,13,'#382620');ellipse(20,-50,7,13,'#382620')}
  else{ellipse(-2,-66,23,13,'#29252b');ellipse(11,-68,14,9,'#29252b');ellipse(0,-31,12,5,'#584139')}
  const blink=Math.sin(t*.66+(p?0:1.2))>.995;
  if(dir!==0){
-  if(p){for(let side of [-1,1]){ellipse(side*9,-46,8,7,'#e6bca9');ctx.strokeStyle='#c7ad8d';ctx.lineWidth=2;ctx.beginPath();ctx.arc(side*9,-46,7,0,Math.PI*2);ctx.stroke()}line(-3,-46,3,-46,'#e0bfa8',1.5)}
+  if(p){for(let side of [-1,1]){ctx.strokeStyle='#45403b';ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(side*9,-46,8,0,Math.PI*2);ctx.stroke()}line(-1,-46,1,-46,'#45403b',2)}
   else{rr(-19,-53,17,13,4,'#282831');rr(2,-53,17,13,4,'#282831');line(-2,-47,2,-47,'#282831',3)}
   if(!blink){ellipse(-9,-45,1.8,2.2,'#352b2f');ellipse(9,-45,1.8,2.2,'#352b2f')}else line(-11,-45,-7,-45,'#332b2e',2);
   ctx.beginPath();ctx.arc(0,-36,4,.1,Math.PI-.1);ctx.strokeStyle='#7e4a49';ctx.lineWidth=1.2;ctx.stroke();
