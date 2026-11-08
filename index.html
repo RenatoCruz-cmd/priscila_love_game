@@ -76,7 +76,15 @@
     @keyframes rise {to{transform:translate(var(--dx),-130px) rotate(24deg);opacity:0}}
     @media (pointer:coarse),(max-width:700px){.mobile{display:block}.hud{gap:5px}.pill{padding:8px 10px;font-size:12px}.hud-right{gap:5px}.hud-right button{font-size:12px}.hud-left{gap:5px}#guide{top:105px;font-size:11px;max-width:90vw}#interactHint{bottom:140px;font-size:12px}.modal-body{padding:17px}.memorycard{font-size:21px}.welcome{padding:25px 18px}.welcome .big{font-size:55px}}
     @media(max-height:560px){.welcome{padding:14px}.welcome .big{font-size:34px}.welcome p{margin:7px auto}.dialogue{bottom:16px}.hud{padding:6px}#guide{top:55px}}
-  </style>
+  
+/* Controles móveis robustos: área de toque acima dos diálogos e setas alternativas. */
+#joy,#touchInteract{z-index:100!important;pointer-events:auto!important;-webkit-user-select:none;user-select:none;touch-action:none!important}
+#mobileDpad{position:fixed;bottom:max(145px,calc(env(safe-area-inset-bottom) + 132px));left:max(18px,env(safe-area-inset-left));z-index:101;display:none;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,42px);gap:3px;touch-action:none}
+#mobileDpad button{background:#fff8f0e8;border:2px solid #e69bb4;border-radius:12px;color:#784b63;font-weight:900;font-size:22px;touch-action:none;user-select:none;-webkit-user-select:none}
+@media(pointer:coarse),(max-width:700px){#mobileDpad{display:grid}}
+#controlStatus{position:fixed;bottom:max(265px,calc(env(safe-area-inset-bottom) + 250px));left:14px;z-index:101;font-size:11px;color:#5b3544;background:#fff9eddf;padding:4px 7px;border-radius:8px;display:none}
+@media(pointer:coarse),(max-width:700px){#controlStatus{display:block}}
+</style>
 </head>
 <body>
 <canvas id="game" aria-label="Mapa do mundinho da Priscila"></canvas>
@@ -87,6 +95,7 @@
 </div>
 <div id="guide">Primeira missão: encontre o Renato na Casa do Trabalho 💗</div>
 <div id="interactHint"></div>
+<div id="mobileDpad" aria-label="Setas alternativas"><span></span><button data-dir="up" aria-label="Cima">▲</button><span></span><button data-dir="left" aria-label="Esquerda">◀</button><button data-dir="down" aria-label="Baixo">▼</button><button data-dir="right" aria-label="Direita">▶</button></div><div id="controlStatus">Controle pronto</div>
 <div class="mobile" id="joy" aria-label="Controle de movimento"><div id="joyKnob"></div></div>
 <button class="mobile" id="touchInteract">Interagir<br>💗</button>
 <div id="startOverlay" class="overlay"><section class="welcome"><div class="big">🌷🏡💗</div><h1>Priscila, o mundinho do nosso amor</h1><p>Do primeiro olhar no trabalho às nossas próximas aventuras… fiz um cantinho só nosso, para você passear, sorrir e descobrir tudo o que sinto por você.</p><button class="mainbtn" id="startBtn">Entrar no nosso mundinho ✨</button><p class="mini">⌨️ WASD ou setas para andar · E / Espaço para interagir<br>📱 Toque no mapa ou use o controle virtual · O progresso fica salvo</p></section></div>
@@ -290,11 +299,12 @@ function applyJoystick(clientX,clientY){
  game.target=null;
  knob.style.transform='translate('+dx+'px,'+dy+'px)';
  // O tutorial não deve impedir a personagem de andar no celular.
- if(game.running&&game.mode==='dialog'&&length>12)nextDialog();
+ if(length>12){if(!game.running){game.running=true;$('startOverlay').classList.add('hidden')}if(game.mode==='dialog'){clearInterval(game.dialogInterval);$('dialogue').classList.add('hidden');game.mode='world'}if(game.mode==='start')game.mode='world'}
+ const status=$('controlStatus');if(status)status.textContent='Joystick: '+Math.round(length)+'px';
 }
 function releaseJoystick(){
  activeJoystickPointer=null;activeJoystickTouch=null;
- game.touch.x=0;game.touch.y=0;resetStick();
+ game.touch.x=0;game.touch.y=0;resetStick();const status=$('controlStatus');if(status)status.textContent='Controle pronto';
 }
 stick.style.touchAction='none';
 stick.addEventListener('pointerdown',e=>{
@@ -325,6 +335,32 @@ document.addEventListener('touchcancel',e=>{
 });
 $('touchInteract').addEventListener('click',interact);
 $('touchInteract').addEventListener('touchend',e=>{e.preventDefault();interact()},{passive:false});
+// Direcionais independentes para iPhone: segurando a seta, o personagem anda.
+const directionVectors={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+let activeDirection=null;
+function beginDirection(dir){
+ if(!game.running){game.running=true;$('startOverlay').classList.add('hidden')}
+ if(game.mode==='dialog'){clearInterval(game.dialogInterval);$('dialogue').classList.add('hidden');game.mode='world'}
+ if(game.mode==='mini')return;
+ activeDirection=dir;
+ game.target=null;
+ const v=directionVectors[dir];game.touch.x=v[0];game.touch.y=v[1];
+ $('controlStatus').textContent='Movendo: '+dir;
+}
+function endDirection(dir){
+ if(activeDirection!==dir)return;
+ activeDirection=null;game.touch.x=0;game.touch.y=0;
+ $('controlStatus').textContent='Controle pronto';
+}
+document.querySelectorAll('#mobileDpad [data-dir]').forEach(btn=>{
+ const dir=btn.dataset.dir;
+ btn.addEventListener('pointerdown',e=>{e.preventDefault();beginDirection(dir)},{passive:false});
+ btn.addEventListener('pointerup',e=>{e.preventDefault();endDirection(dir)},{passive:false});
+ btn.addEventListener('pointercancel',()=>endDirection(dir));
+ btn.addEventListener('touchstart',e=>{e.preventDefault();beginDirection(dir)},{passive:false});
+ btn.addEventListener('touchend',e=>{e.preventDefault();endDirection(dir)},{passive:false});
+ btn.addEventListener('touchcancel',()=>endDirection(dir));
+});
 $('startBtn').addEventListener('click',()=>{game.running=true;game.mode='world';$('startOverlay').classList.add('hidden');initAudio();updateHud();dialog('💌 Renato','Bem-vinda ao nosso mundinho, Priguiça! Para começar, vá à Casa do Trabalho. Tem alguém muito apaixonado esperando por você... 🐊💗')});
 $('where').addEventListener('click',()=>{const n=nextTarget();spawnParticles(n.x,n.y,15,['✨','💗']);dialog('🧭 Zé Jacaré',n.label+' Siga a seta e o brilho dourado pelo mapa!')});
 $('album').addEventListener('click',showAlbum);
