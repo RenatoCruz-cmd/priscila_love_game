@@ -283,12 +283,18 @@ function resetStick(){knob.style.transform='translate(0,0)'}
 function updateStick(e){let r=stick.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),mag=Math.hypot(dx,dy),limit=36;if(mag>limit){dx=dx/mag*limit;dy=dy/mag*limit}game.touch={x:dx/limit,y:dy/limit};knob.style.transform=`translate(${dx}px,${dy}px)`;game.target=null;}
 stick.addEventListener('pointerdown',e=>{e.preventDefault();joyPointer=e.pointerId;try{stick.setPointerCapture(joyPointer)}catch{}updateStick(e)});
 stick.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)updateStick(e)});
+document.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)updateStick(e)});
+document.addEventListener('pointerup',e=>{if(e.pointerId===joyPointer)stopStick(e)});
+document.addEventListener('pointercancel',e=>{if(e.pointerId===joyPointer)stopStick(e)});
+
 function stopStick(e){if(joyPointer===null||e.pointerId===joyPointer){joyPointer=null;game.touch={x:0,y:0};resetStick()}}
 stick.addEventListener('pointerup',stopStick);stick.addEventListener('pointercancel',stopStick);
 // Suporte adicional a Safari/iOS: toque e arraste sem depender de Pointer Events.
 let touchJoyId=null;
 stick.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];touchJoyId=t.identifier;updateStick(t)},{passive:false});
 stick.addEventListener('touchmove',e=>{e.preventDefault();const t=Array.from(e.touches).find(t=>t.identifier===touchJoyId);if(t)updateStick(t)},{passive:false});
+document.addEventListener('touchmove',e=>{if(touchJoyId===null)return;const t=Array.from(e.touches).find(t=>t.identifier===touchJoyId);if(t){e.preventDefault();updateStick(t)}},{passive:false});
+
 function releaseTouchJoy(e){if(touchJoyId!==null&&Array.from(e.changedTouches).some(t=>t.identifier===touchJoyId)){touchJoyId=null;game.touch={x:0,y:0};resetStick()}}
 stick.addEventListener('touchend',releaseTouchJoy,{passive:false});
 stick.addEventListener('touchcancel',releaseTouchJoy,{passive:false});
@@ -300,7 +306,7 @@ $('album').addEventListener('click',showAlbum);
 $('restart').addEventListener('click',()=>{if(confirm('Quer apagar as estrelas, os corações e recomeçar nossa história? 💗')){progress=defaultSave();player.x=440;player.y=458;renato.x=410;renato.y=328;game.trail=[];game.target=null;save();updateHud();hideModal();toast('Nosso amor merece viver o começo de novo! 💗')}});
 function update(dt){
  game.elapsed+=dt;game.frame++;
- if(game.mode==='world'){
+ if(game.mode==='world'||(game.mode==='dialog'&&Math.hypot(game.touch.x,game.touch.y)>.15)){
   let vx=Number(game.keys['d']||game.keys['arrowright'])-Number(game.keys['a']||game.keys['arrowleft'])+game.touch.x;
   let vy=Number(game.keys['s']||game.keys['arrowdown'])-Number(game.keys['w']||game.keys['arrowup'])+game.touch.y;
   if(Math.hypot(vx,vy)<.09&&game.target){let dx=game.target.x-player.x,dy=game.target.y-player.y,dist=Math.hypot(dx,dy);if(dist>12){vx=dx/dist;vy=dy/dist}else game.target=null}
@@ -476,9 +482,19 @@ function drawPerson(x,y,which,t,moving,dir){
  if(p){line(-11,-29,-11,-20,'#3b2929',2);line(11,-29,11,-20,'#3b2929',2);rr(-17,-21,34,23,8,'#684437')}
  else{line(-8,-28,0,-18,'#aaa49a',2);line(8,-28,0,-18,'#aaa49a',2);rr(18,-1,7,4,2,'#c5d7df')}
  // Cabelos e rostos em estilo bonequinhos chibi.
- if(p){ellipse(0,-65,21,17,'#322420');for(let j=0;j<8;j++){let th=j*Math.PI/4;ellipse(Math.cos(th)*17,-67+Math.sin(th)*12,8,8,'#392823')}}
+ if(p){
+  // Cachos soltos, volumosos, descendo até os ombros.
+  ellipse(0,-49,30,40,'#35251f');
+  for(let side of [-1,1]){
+    for(let row=0;row<5;row++){
+      const sway=Math.sin(t*2+row+side)*1.3;
+      ellipse(side*(23+row%2*3)+sway,-65+row*13,10,11,row%2?'#493027':'#35251f');
+    }
+  }
+  for(let j=0;j<9;j++){let xx=-25+j*6.2;ellipse(xx,-69+Math.sin(j*2)*4,8,10,j%2?'#463027':'#35251f')}
+ }
  ellipse(0,-45,23,23,p?'#c58d72':'#c99378');
- if(p){for(let j=0;j<6;j++){ellipse(-17+j*7,-66+(j%2)*3,6,7,'#36251f')}ellipse(-20,-50,7,13,'#382620');ellipse(20,-50,7,13,'#382620')}
+ if(p){for(let j=0;j<7;j++){ellipse(-19+j*6.5,-65+(j%2)*3,6,8,'#38261f')}}
  else{ellipse(-2,-66,23,13,'#29252b');ellipse(11,-68,14,9,'#29252b');ellipse(0,-31,12,5,'#584139')}
  const blink=Math.sin(t*.66+(p?0:1.2))>.995;
  if(dir!==0){
