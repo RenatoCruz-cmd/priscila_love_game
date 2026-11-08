@@ -300,15 +300,17 @@ function applyJoystick(clientX,clientY){
  knob.style.transform='translate('+dx+'px,'+dy+'px)';
  // O tutorial não deve impedir a personagem de andar no celular.
  if(length>12){if(!game.running){game.running=true;$('startOverlay').classList.add('hidden')}if(game.mode==='dialog'){clearInterval(game.dialogInterval);$('dialogue').classList.add('hidden');game.mode='world'}if(game.mode==='start')game.mode='world'}
- const status=$('controlStatus');if(status)status.textContent='Joystick: '+Math.round(length)+'px';
+ const status=$('controlStatus');if(status)status.textContent='Joystick ativo: '+Math.round(length)+'px | '+Math.round(player.x)+','+Math.round(player.y);
 }
+// Segurança: a direção física do dedo tem prioridade sobre eventos duplicados do Safari.
+let joystickLastTouch=0;
 function releaseJoystick(){
  activeJoystickPointer=null;activeJoystickTouch=null;
  game.touch.x=0;game.touch.y=0;resetStick();const status=$('controlStatus');if(status)status.textContent='Controle pronto';
 }
 stick.style.touchAction='none';
 stick.addEventListener('pointerdown',e=>{
- if(e.pointerType==='touch')return;
+ if(e.pointerType==='touch'||Date.now()-joystickLastTouch<800)return;
  e.preventDefault();activeJoystickPointer=e.pointerId;
  applyJoystick(e.clientX,e.clientY);
 },{passive:false});
@@ -319,7 +321,7 @@ document.addEventListener('pointerup',e=>{if(activeJoystickPointer===e.pointerId
 document.addEventListener('pointercancel',e=>{if(activeJoystickPointer===e.pointerId)releaseJoystick()});
 stick.addEventListener('touchstart',e=>{
  e.preventDefault();e.stopPropagation();
- const t=e.changedTouches[0];activeJoystickTouch=t.identifier;
+ const t=e.changedTouches[0];joystickLastTouch=Date.now();activeJoystickTouch=t.identifier;
  applyJoystick(t.clientX,t.clientY);
 },{passive:false});
 document.addEventListener('touchmove',e=>{
@@ -367,7 +369,7 @@ $('album').addEventListener('click',showAlbum);
 $('restart').addEventListener('click',()=>{if(confirm('Quer apagar as estrelas, os corações e recomeçar nossa história? 💗')){progress=defaultSave();player.x=440;player.y=458;renato.x=410;renato.y=328;game.trail=[];game.target=null;save();updateHud();hideModal();toast('Nosso amor merece viver o começo de novo! 💗')}});
 function update(dt){
  game.elapsed+=dt;game.frame++;
- if(game.mode==='world'){
+ if(game.mode==='world'||(game.mode==='dialog'&&(Math.abs(game.touch.x)+Math.abs(game.touch.y)>.05))){
   let vx=Number(game.keys['d']||game.keys['arrowright'])-Number(game.keys['a']||game.keys['arrowleft'])+game.touch.x;
   let vy=Number(game.keys['s']||game.keys['arrowdown'])-Number(game.keys['w']||game.keys['arrowup'])+game.touch.y;
   if(Math.hypot(vx,vy)<.09&&game.target){let dx=game.target.x-player.x,dy=game.target.y-player.y,dist=Math.hypot(dx,dy);if(dist>12){vx=dx/dist;vy=dy/dist}else game.target=null}
@@ -606,6 +608,13 @@ function tick(ms){let t=ms/1000,dt=clamp((ms-previous)/1000||.016,0,.04);previou
  if(game.running){update(dt);render(t)}else{game.elapsed+=dt;render(t)}requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
+setInterval(()=>{
+ const status=$('controlStatus');
+ if(status&&game.running){
+  const active=Math.hypot(game.touch.x,game.touch.y)>.05;
+  status.textContent=(active?'MOVENDO':'Pronto')+' · '+game.mode+' · X:'+Math.round(player.x)+' Y:'+Math.round(player.y);
+ }
+},300);
 // ======================= MÚSICA E EFEITOS (SEM ARQUIVOS EXTERNOS) =======================
 function initAudio(){if(!game.audio){const AC=window.AudioContext||window.webkitAudioContext;if(AC)try{game.audio=new AC()}catch{}}
  if(game.audio&&game.audio.state==='suspended')game.audio.resume().catch(()=>{});
